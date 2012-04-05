@@ -26,30 +26,60 @@
  */
 package com.tresys.jalop.common;
 
+import java.io.File;
 import static org.junit.Assert.*;
 
 import java.util.GregorianCalendar;
 
-import org.junit.Test;
-import org.junit.Before;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import mockit.*;
 import mockit.integration.junit4.*;
 
+import org.junit.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import com.tresys.jalop.common.JALUtils;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 public class TestJALUtils {
-	JALUtils utils;
+
+	private static JALUtils utils;
+	private static ObjectFactory of;
+	private ApplicationMetadataType amt;
+	private LoggerType logger;
+	private Document doc;
 	
 	@Before
 	public void setup() {
 		utils = new JALUtils();
+		of = new ObjectFactory();
+		amt = new ApplicationMetadataType();
+		logger = new LoggerType();		
+		
 	}
-	
+
 	@Test
 	public void testGetCurrentTimeWorks() throws Exception {
 		GregorianCalendar gc = new GregorianCalendar();
@@ -76,5 +106,57 @@ public class TestJALUtils {
 		};
 		
 		assertTrue(utils.getCurrentTime() == null);
+	}
+	
+	@Test
+	public void testMarshalWorks() throws Exception {
+		amt.setJID("JID");
+		amt.setLogger(logger);
+		
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		assertNotNull(appMeta);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+		assertNotNull(jc);
+
+		doc = utils.marshal(jc, appMeta);
+		assertNotNull(doc);
+		
+		Node appMetaElem = doc.getElementsByTagName("ApplicationMetadata").item(0);
+		assertNotNull(appMetaElem);
+		assertEquals("ApplicationMetadata", appMetaElem.getNodeName());
+		assertEquals("JID", appMetaElem.getAttributes().getNamedItem("JID").getNodeValue());
+		Node loggerElem = appMetaElem.getFirstChild();
+		assertNotNull(loggerElem);
+		assertEquals("Logger", loggerElem.getNodeName());
+		assertEquals(null, loggerElem.getNodeValue());
+	}
+	
+	@Test(expected = JAXBException.class)
+	public void testMarshalThrowsJAXBExceptionWhenMarshalFails() throws Exception {
+
+		new NonStrictExpectations() {
+			@Capturing Marshaller m;
+			{
+				m.marshal((Object)any, (Document)any); result = new JAXBException("error");
+			}
+		};
+		
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		assertNotNull(appMeta);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+		assertNotNull(jc);
+		
+		doc = utils.marshal(jc, appMeta);
+	}
+
+	@Test(expected = JAXBException.class)
+	public void testMarshalThrowsJAXBExceptionWhenSchemaValidationFails() throws Exception {
+
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		assertNotNull(appMeta);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+		assertNotNull(jc);
+
+		doc = utils.marshal(jc, appMeta);
 	}
 }
