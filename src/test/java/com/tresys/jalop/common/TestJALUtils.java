@@ -24,14 +24,57 @@
  * limitations under the License.
  *
  */
-package com.tresys.jalop;
+package com.tresys.jalop.common;
 
 import static org.junit.Assert.*;
 
+import java.util.GregorianCalendar;
+
 import org.junit.Test;
+import org.junit.Before;
+
+import mockit.*;
+import mockit.integration.junit4.*;
 
 import com.tresys.jalop.common.JALUtils;
 
-public class TestJALUtils {
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
+public class TestJALUtils {
+	JALUtils utils;
+	
+	@Before
+	public void setup() {
+		utils = new JALUtils();
+	}
+	
+	@Test
+	public void testGetCurrentTimeWorks() throws Exception {
+		GregorianCalendar gc = new GregorianCalendar();
+		XMLGregorianCalendar xmlCal = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
+
+		XMLGregorianCalendar date;
+		date = utils.getCurrentTime();
+		assertTrue(date != null);
+		assertTrue(date instanceof XMLGregorianCalendar);
+		assertTrue(date.getMonth() == xmlCal.getMonth());
+		assertTrue(date.getDay() == xmlCal.getDay());
+		assertTrue(date.getYear() == xmlCal.getYear());
+		assertTrue(date.getEon() == xmlCal.getEon());
+	}
+	
+	@Test(expected = DatatypeConfigurationException.class)
+	public void testGetCurrentTimeThrowsExceptionOnFailure() throws Exception {
+		new MockUp<DatatypeFactory>() {
+			@Mock
+			DatatypeFactory newInstance() throws DatatypeConfigurationException
+			{
+				throw new DatatypeConfigurationException();
+			}
+		};
+		
+		assertTrue(utils.getCurrentTime() == null);
+	}
 }
