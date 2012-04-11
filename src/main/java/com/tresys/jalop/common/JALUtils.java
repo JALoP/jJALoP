@@ -33,6 +33,8 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
+import javax.xml.crypto.dsig.DigestMethod;
+
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
@@ -71,6 +73,23 @@ public class JALUtils {
 		m.marshal(element, document);
 
 		return document;
+	}
+
+	/**
+	 * An enum for the different types of digest methods that can be used
+	 */
+	public enum DMType {
+		SHA256 (DigestMethod.SHA256),
+		SHA512 (DigestMethod.SHA512),
+		SHA384 ("http://www.w3.org/2001/04/xmldsig-more#sha384");
+
+		private String digestMethod;
+
+		DMType(String digestMethod) {
+			this.digestMethod = digestMethod;
+		}
+
+		private String digestMethod() { return digestMethod; }
 	}
 
 	/**
