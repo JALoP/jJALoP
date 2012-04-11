@@ -31,8 +31,11 @@ package com.tresys.jalop.producer;
 import java.util.UUID;
 
 import com.tresys.jalop.common.JALException;
+import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.*;
 import javax.xml.bind.*;
+
+import org.w3c.dom.Document;
 
 public abstract class ApplicationMetadataXML {
 
@@ -233,6 +236,20 @@ public abstract class ApplicationMetadataXML {
 				return of.createXOR(xorEcb);
 		}
 		return null;
+	}
+
+	/**
+	 * Builds a document and marshals the xml into the document. 
+	 * This also validates the xml against the given schema.
+	 * 
+	 * @return	the marshalled document
+	 * @throws Exception
+	 */
+	public Document marshal() throws Exception {
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+
+		return JALUtils.marshal(jc, appMeta);
 	}
 
 	/**
