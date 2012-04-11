@@ -258,8 +258,9 @@ public abstract class ApplicationMetadataXML {
 	 *
 	 * @param hostName			the name of the host
 	 * @param applicationName	the name of the application
+	 * @throws Exception 
 	 */
-	public void prepareSend(String hostName, String applicationName) {
+	public void prepareSend(String hostName, String applicationName) throws Exception {
 		// To be overridden in subclasses if necessary
 		UUID jid = UUID.randomUUID();
 		amt.setJID("UUID-"+jid.toString());
