@@ -26,14 +26,52 @@
  */
 package com.tresys.jalop.common;
 
+import java.io.File;
 import java.util.GregorianCalendar;
 
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+
+import org.w3c.dom.Document;
 
 public class JALUtils {
-
+	
 	public static final String SCHEMA_LOCATION = "src/main/java/com/tresys/jalop/schemas/applicationMetadataTypes.xsd";
+
+	/**
+	 * Builds a document and marshals the xml into the document. 
+	 * This also validates the xml against the given schema.
+	 * 
+	 * @param jc		the JAXBContext of the correct class
+	 * @param element	the JAXBElement created by ObjectFactory for the correct class
+	 * @return	the marshaled document
+	 * @throws Exception 
+	 */
+	public static Document marshal(JAXBContext jc, JAXBElement element) throws Exception {
+		Marshaller m = jc.createMarshaller();
+		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+
+		SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		Schema schema = sf.newSchema(new File(SCHEMA_LOCATION));
+		m.setSchema(schema);
+
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		dbf.setNamespaceAware(true);
+		DocumentBuilder db = dbf.newDocumentBuilder();
+		Document document = db.newDocument();
+
+		m.marshal(element, document);
+
+		return document;
+	}
 
 	/**
 	 * Creates a calendar with the current date and time to set the timestamp
