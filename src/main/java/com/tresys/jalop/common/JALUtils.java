@@ -26,8 +26,24 @@
  */
 package com.tresys.jalop.common;
 
+import java.util.GregorianCalendar;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+
 public class JALUtils {
-	
+
 	public static final String SCHEMA_LOCATION = "src/main/java/com/tresys/jalop/schemas/applicationMetadataTypes.xsd";
-	
+
+	/**
+	 * Creates a calendar with the current date and time to set the timestamp
+	 * 
+	 * @return	XMLGregorianCalendar with the current date
+	 * @throws Exception
+	 */
+	public static XMLGregorianCalendar getCurrentTime() throws Exception {
+		GregorianCalendar gc = new GregorianCalendar();
+		XMLGregorianCalendar xmlCal = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
+		return xmlCal;
+	}
 }
