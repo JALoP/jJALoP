@@ -27,6 +27,8 @@
 
 package com.tresys.jalop.producer;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -266,6 +268,39 @@ public class JALProducer {
 		}
 		this.messageType = MessageType.JALP_AUDIT_MSG;
 		JALUtils.processSend(this, buffer);
+	}
+
+	/**
+	 * Sets the messageType to JALP_JOURNAL_MSG and calls processSend in JALUtils
+	 *
+	 * @param input		required, a String which is either a buffer or a path to a file
+	 * @param isPath	required, a Boolean, true if the input is a path to a file,
+	 * 					false if the input is a buffer
+	 * @throws Exception
+	 */
+	public void jalpJournal(String input, Boolean isPath) throws Exception {
+		if(input == null || "".equals(input)) {
+			throw new JALException("String input is required");
+		} else if(isPath == null) {
+			throw new JALException("Boolean isPath is required");
+		}
+		this.messageType = MessageType.JALP_JOURNAL_MSG;
+
+		if(Boolean.TRUE.equals(isPath)) {
+			StringBuilder sb = new StringBuilder();
+
+			BufferedReader reader = new BufferedReader(new FileReader(input));
+			char[] buffer = new char[8192];
+			int read;
+			while((read = reader.read(buffer, 0, buffer.length)) > 0) {
+				sb.append(buffer, 0, read);
+			}
+
+			JALUtils.processSend(this, sb.toString());
+
+		} else {
+			JALUtils.processSend(this, input);
+		}
 	}
 
 }
