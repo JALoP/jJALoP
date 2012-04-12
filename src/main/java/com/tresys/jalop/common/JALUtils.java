@@ -66,7 +66,13 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
+import com.etsy.net.ConnectionHeader;
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.etsy.net.JUDS;
+import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
+import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
@@ -76,15 +82,49 @@ import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ReferenceType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
 
-import com.etsy.net.ConnectionHeader;
-import com.etsy.net.ConnectionHeader.MessageType;
-import com.etsy.net.JUDS;
-import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
-import com.etsy.net.UnixDomainSocketClient;
-
 public class JALUtils {
 	
 	public static final String SCHEMA_LOCATION = "src/main/java/com/tresys/jalop/schemas/applicationMetadataTypes.xsd";
+
+	/**
+	 * Starts the send process. Calls methods to set fields,
+	 * sign the document and create the manifest if applicable then continues with send.
+	 *
+	 * @param producer	the JALProducer
+	 * @param buffer	a String which is the buffer
+	 * @throws Exception
+	 */
+	public static void processSend(JALProducer producer, String buffer) throws Exception {
+
+		if(producer == null) {
+			throw new JALException("The JALProducer must not be null.");
+		}
+
+		ApplicationMetadataXML xml = producer.getXml();
+		if(xml == null) {
+			throw new JALException("The ApplicationMetadataXML must be set in the JALProducer.");
+		}
+
+		xml.prepareSend(producer.getHostName(), producer.getApplicationName());
+
+		Document doc = xml.marshal();
+
+		if(producer.getDigestMethod() != null && buffer != null && !"".equals(buffer)) {
+			createManifest(doc, producer.getDigestMethod(), buffer, producer.getMessageType());
+		}
+
+		if(producer.getPrivateKey() != null && producer.getPublicKey() != null) {
+			sign(doc, producer);
+		}
+
+		if(producer.getDigestMethod() != null && buffer != null && !"".equals(buffer)) {
+			//Move the manifest to the end of the document
+			Node manifest = doc.getElementsByTagName("Manifest").item(0);
+			doc.getDocumentElement().appendChild(manifest);
+		}
+
+		send(doc, producer.getSocketFile(), buffer, producer.getMessageType());
+	}
 
 	/**
 	 * Builds a document and marshals the xml into the document. 
