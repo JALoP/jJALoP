@@ -34,7 +34,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
 import javax.xml.crypto.dsig.DigestMethod;
-
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
@@ -43,6 +42,15 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.w3c.dom.Document;
+
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ManifestType;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ObjectFactory;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ReferenceType;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformType;
+import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
+
 
 public class JALUtils {
 	
@@ -90,6 +98,51 @@ public class JALUtils {
 		}
 
 		private String digestMethod() { return digestMethod; }
+	}
+
+	/**
+	 * Creates a manifest document for the payload, marshals it and
+	 * appends it to the original document.
+	 *
+	 * @param doc			the signed Document
+	 * @param dmType		the DMType which will determine the digest method used
+	 * @param buffer		a String which is the buffer
+	 * @param messageType	the MessageType
+	 * @throws Exception
+	 */
+	private static void createManifest(Document doc, DMType dmType, String buffer, MessageType messageType) throws Exception {
+
+		if(dmType == null || messageType == null) {
+			throw new JALException("DMType and MessageType must be set in the JALProducer first.");
+		}
+
+		ManifestType manifest = new ManifestType();
+
+		ReferenceType ref = new ReferenceType();
+		ref.setURI("jalop:payload");
+
+		DigestMethodType digestMethod = new DigestMethodType();
+		digestMethod.setAlgorithm(dmType.digestMethod());
+
+		ref.setDigestMethod(digestMethod);
+		ref.setDigestValue(buffer.getBytes());
+
+		if(MessageType.JALP_AUDIT_MSG.equals(messageType)) {
+			TransformType transform = new TransformType();
+			transform.setAlgorithm("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments");
+			TransformsType transforms = new TransformsType();
+			transforms.getTransform().add(transform);
+			ref.setTransforms(transforms);
+		}
+
+		manifest.getReference().add(ref);
+
+		ObjectFactory of = new ObjectFactory();
+		JAXBElement<ManifestType> man = of.createManifest(manifest);
+		JAXBContext jc = JAXBContext.newInstance(ManifestType.class.getPackage().getName());
+		Document manifestDocument = marshal(jc, man);
+
+		doc.getDocumentElement().appendChild(doc.importNode(manifestDocument.getFirstChild(),true));
 	}
 
 	/**
