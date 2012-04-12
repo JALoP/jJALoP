@@ -32,6 +32,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 
@@ -240,5 +241,16 @@ public class JALProducer {
 	public MessageType getMessageType() {
 		return messageType;
 	}
-	
+
+	/**
+	 * Sets the messageType to JALP_LOG_MSG and calls processSend in JALUtils
+	 *
+	 * @param buffer	optional, a String which is the buffer
+	 * @throws Exception
+	 */
+	public void jalpLog(String buffer) throws Exception {
+		this.messageType = MessageType.JALP_LOG_MSG;
+		JALUtils.processSend(this, buffer);
+	}
+
 }
