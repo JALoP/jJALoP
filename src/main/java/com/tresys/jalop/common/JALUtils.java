@@ -27,6 +27,7 @@
 package com.tresys.jalop.common;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,12 +58,15 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.w3c.dom.Document;
 
-import com.etsy.net.ConnectionHeader.MessageType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
@@ -72,6 +76,11 @@ import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ReferenceType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
 
+import com.etsy.net.ConnectionHeader;
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.etsy.net.JUDS;
+import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
+import com.etsy.net.UnixDomainSocketClient;
 
 public class JALUtils {
 	
@@ -240,6 +249,54 @@ public class JALUtils {
 		Document manifestDocument = marshal(jc, man);
 
 		doc.getDocumentElement().appendChild(doc.importNode(manifestDocument.getFirstChild(),true));
+	}
+
+	/**
+	 * Creates a connection header and uses a UnixDomainSocketOutputStream to
+	 * send the buffer and application metadata to the local store with sendmsg.
+	 *
+	 * @param doc			the marshaled xml doc
+	 * @param socketFile	the socket file
+	 * @param buffer		a String which is the buffer to send
+	 * @param messageType	the type of message to send
+	 * @throws Exception
+	 */
+	private static void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+		if(socketFile != null && !"".equals(socketFile)) {
+			UnixDomainSocketClient socket = new UnixDomainSocketClient(socketFile,
+					JUDS.SOCK_STREAM);
+
+			UnixDomainSocketOutputStream out = (UnixDomainSocketOutputStream)socket.getOutputStream();
+
+			TransformerFactory transFactory = TransformerFactory.newInstance();
+			Transformer trans = transFactory.newTransformer();
+			StringWriter writer = new StringWriter();
+			trans.transform(new DOMSource(doc), new StreamResult(writer));
+			String appMeta = writer.toString();
+
+			int bufferLength = 0;
+			byte[] bufferBytes = null;
+			if(buffer != null) {
+				bufferBytes = buffer.getBytes();
+				bufferLength = bufferBytes.length;
+			}
+
+			int appMetaLength = 0;
+			byte[] appMetaBytes = null;
+			if(appMeta != null) {
+				appMetaBytes = appMeta.getBytes();
+				appMetaLength = appMetaBytes.length;
+			}
+
+			ConnectionHeader connectionHeader = new ConnectionHeader(1, messageType, bufferLength, appMetaLength);
+
+			out.sendmsg(bufferBytes, appMetaBytes, connectionHeader);
+
+			socket.close();
+
+		} else {
+			throw new JALException("Error in JALUtils.send - socketFile path must be set in producer");
+		}
 	}
 
 	/**
