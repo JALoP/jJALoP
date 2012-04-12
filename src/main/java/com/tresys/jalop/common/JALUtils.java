@@ -27,13 +27,32 @@
 package com.tresys.jalop.common;
 
 import java.io.File;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
+import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.crypto.dsig.DigestMethod;
+import javax.xml.crypto.dsig.Reference;
+import javax.xml.crypto.dsig.SignatureMethod;
+import javax.xml.crypto.dsig.SignedInfo;
+import javax.xml.crypto.dsig.Transform;
+import javax.xml.crypto.dsig.XMLSignature;
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+import javax.xml.crypto.dsig.dom.DOMSignContext;
+import javax.xml.crypto.dsig.keyinfo.KeyInfo;
+import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
+import javax.xml.crypto.dsig.keyinfo.X509Data;
+import javax.xml.crypto.dsig.keyinfo.X509IssuerSerial;
+import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
+import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
@@ -44,6 +63,8 @@ import javax.xml.validation.SchemaFactory;
 import org.w3c.dom.Document;
 
 import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.producer.ApplicationMetadataXML;
+import com.tresys.jalop.producer.JALProducer;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ManifestType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ObjectFactory;
@@ -81,6 +102,82 @@ public class JALUtils {
 		m.marshal(element, document);
 
 		return document;
+	}
+
+	/**
+	 * Adds a signature to the given document
+	 *
+	 * @param doc		the marshaled document to be signed
+	 * @param producer	the JALProducer
+	 * @throws Exception
+	 */
+	private static void sign(Document doc, JALProducer producer) throws Exception {
+		ApplicationMetadataXML xml = producer.getXml();
+		String jid = xml.getJID();
+
+		DOMSignContext domSignContext = new DOMSignContext(producer.getPrivateKey(), doc.getDocumentElement());
+
+		//This allows the xpointer below to resolve JID as an ID
+		domSignContext.setIdAttributeNS(doc.getDocumentElement(), null, "JID");
+
+		XMLSignatureFactory xmlSigFactory = XMLSignatureFactory.getInstance("DOM");
+
+		List<Transform> transformList = new ArrayList<Transform>();
+
+		transformList.add(xmlSigFactory.newTransform(
+				Transform.ENVELOPED,
+				(TransformParameterSpec) null));
+
+		transformList.add(xmlSigFactory.newTransform(
+				"http://www.w3.org/2001/10/xml-exc-c14n#WithComments",
+				(TransformParameterSpec) null));
+
+		String uri = "#xpointer(id(\'"+jid+"\'))";
+		Reference reference = xmlSigFactory.newReference(uri,
+			xmlSigFactory.newDigestMethod(DigestMethod.SHA256, null),
+		    transformList, null, null);
+
+		CanonicalizationMethod canonicalizationMethod = xmlSigFactory.newCanonicalizationMethod(
+				CanonicalizationMethod.INCLUSIVE_WITH_COMMENTS,
+				(C14NMethodParameterSpec) null);
+
+		SignatureMethod signatureMethod = xmlSigFactory.newSignatureMethod(
+				"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+				null);
+
+		SignedInfo signedInfo = xmlSigFactory.newSignedInfo(
+			canonicalizationMethod,
+			signatureMethod,
+			Collections.singletonList(reference));
+
+		KeyInfoFactory keyInfoFactory = xmlSigFactory.getKeyInfoFactory();
+
+		KeyValue keyValue = keyInfoFactory.newKeyValue(producer.getPublicKey());
+
+		List keyInfoList = new ArrayList();
+		keyInfoList.add(keyValue);
+
+		if(producer.getCertificate() != null) {
+			X509Certificate cert = producer.getCertificate();
+			List content = new ArrayList();
+			content.add(cert.getSubjectX500Principal().getName());
+
+			X509IssuerSerial issuerSerial = keyInfoFactory.newX509IssuerSerial(
+					cert.getIssuerX500Principal().getName(),
+					cert.getSerialNumber());
+			content.add(issuerSerial);
+
+			content.add(cert);
+
+			X509Data xd = keyInfoFactory.newX509Data(content);
+			keyInfoList.add(xd);
+		}
+
+		KeyInfo keyInfo = keyInfoFactory.newKeyInfo(keyInfoList);
+
+		XMLSignature signature = xmlSigFactory.newXMLSignature(signedInfo, keyInfo);
+
+		signature.sign(domSignContext);
 	}
 
 	/**
