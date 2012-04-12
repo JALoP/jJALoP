@@ -32,6 +32,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
@@ -250,6 +251,20 @@ public class JALProducer {
 	 */
 	public void jalpLog(String buffer) throws Exception {
 		this.messageType = MessageType.JALP_LOG_MSG;
+		JALUtils.processSend(this, buffer);
+	}
+
+	/**
+	 * Sets the messageType to JALP_AUDIT_MSG and calls processSend in JALUtils
+	 *
+	 * @param buffer	required, a String which is the buffer
+	 * @throws Exception
+	 */
+	public void jalpAudit(String buffer) throws Exception {
+		if(buffer == null || "".equals(buffer)) {
+			throw new JALException("String buffer is required");
+		}
+		this.messageType = MessageType.JALP_AUDIT_MSG;
 		JALUtils.processSend(this, buffer);
 	}
 
