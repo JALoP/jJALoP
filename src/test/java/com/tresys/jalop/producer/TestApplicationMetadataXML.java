@@ -24,15 +24,18 @@
  * limitations under the License.
  *
  */
-package com.tresys.jalop;
+package com.tresys.jalop.producer;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.w3c.dom.Document;
+
 import mockit.*;
 import mockit.integration.junit4.*;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.JournalMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
@@ -230,5 +233,22 @@ public class TestApplicationMetadataXML {
 		ApplicationMetadataXMLImpl appMetaXML = new ApplicationMetadataXMLImpl();
 		assertNotNull(appMetaXML);
 		appMetaXML.createXorAesType(null, new byte[1], XorAesType.XorECB);
+	}
+	
+	@Test
+	public void testMarshalWorks() throws Exception {
+		LoggerType logger = new LoggerType();
+
+		ApplicationMetadataXMLImpl appMetaXML = new ApplicationMetadataXMLImpl(logger);
+		appMetaXML.prepareSend("Host Name", "Application Name");
+		assertNotNull(appMetaXML);
+		Document doc = appMetaXML.marshal();
+		assertTrue(doc instanceof Document);
+	}
+	
+	@Test(expected = JAXBException.class)
+	public void testMarshalThrowsException() throws Exception {
+		ApplicationMetadataXMLImpl appMetaXML = new ApplicationMetadataXMLImpl();
+		appMetaXML.marshal();
 	}
 }
