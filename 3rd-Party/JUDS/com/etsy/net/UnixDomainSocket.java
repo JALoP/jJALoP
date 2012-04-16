@@ -14,7 +14,6 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.net.URISyntaxException;
 
-
 /**
  * 
  * This class provides a means of using Unix domain socket client/server
@@ -182,6 +181,9 @@ public abstract class UnixDomainSocket {
 
     protected native static int nativeUnlink(String socketFile);
 
+    protected native static int nativeSendmsg(int nativeSocketFileHandle,
+            byte[] data, byte[] meta, ConnectionHeader connectionHeader);
+
     protected UnixDomainSocket()
     {
     // default constructor
@@ -332,7 +334,7 @@ public abstract class UnixDomainSocket {
         }
     }
 
-    protected class UnixDomainSocketOutputStream extends OutputStream {
+    public class UnixDomainSocketOutputStream extends OutputStream {
         @Override
         public void write(int b) throws IOException {
             byte[] data = new byte[1];
@@ -352,6 +354,28 @@ public abstract class UnixDomainSocket {
                 return;
             }
             if (nativeWrite(nativeSocketFileHandle, b, off, len) != len)
+                throw new IOException("Unable to write to Unix domain socket");
+        }
+
+        /**
+         * Checks that connection header is not null and that either data, meta, or both exist
+         * 	then calls nativeSendmsg
+         *
+         * @param data				the buffer string as a byte[]
+         * @param meta				the application metadata as a byte[]
+         * @param connectionHeader	a ConnectionHeader object which should contain: the protocol version,
+         * 							 type of message, length of meta, and length of data
+         * @throws IOException
+         */
+        public void sendmsg(byte data[], byte meta[],
+				ConnectionHeader connectionHeader	) throws IOException {
+            if (connectionHeader == null) {
+                throw new NullPointerException("Connection Header must not be null.");
+            }
+            if (data == null && meta == null) {
+                throw new NullPointerException("meta and data cannot both be null");
+            }
+            if (nativeSendmsg(nativeSocketFileHandle, data, meta, connectionHeader) == -1)
                 throw new IOException("Unable to write to Unix domain socket");
         }
 
