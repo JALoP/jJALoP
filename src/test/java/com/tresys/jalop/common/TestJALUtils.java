@@ -26,42 +26,40 @@
  */
 package com.tresys.jalop.common;
 
-import java.io.File;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.GregorianCalendar;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.crypto.dsig.DigestMethod;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
+import mockit.Capturing;
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.NonStrictExpectations;
 
-import mockit.*;
-import mockit.integration.junit4.*;
-
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.tresys.jalop.common.JALUtils;
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 public class TestJALUtils {
 
@@ -158,5 +156,91 @@ public class TestJALUtils {
 		assertNotNull(jc);
 
 		doc = utils.marshal(jc, appMeta);
+	}
+
+	@Test
+	public void testManifestWorks() throws Exception {
+
+		amt.setJID("JID");
+		amt.setLogger(logger);
+
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		assertNotNull(appMeta);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+		assertNotNull(jc);
+
+		doc = utils.marshal(jc, appMeta);
+
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+
+		method.setAccessible(true);
+		method.invoke(utils, doc, DMType.SHA256, "buffer", MessageType.JALP_LOG_MSG);
+
+		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
+		assertNotNull(manifest);
+
+		Element reference = (Element)doc.getElementsByTagName("Reference").item(0);
+		String uriValue = reference.getAttribute("URI");
+		assertEquals(uriValue, "jalop:payload");
+
+		NodeList transforms = manifest.getElementsByTagName("Transform");
+		assertTrue(transforms.getLength() == 0);
+
+		Element digestMethod = (Element)manifest.getElementsByTagName("DigestMethod").item(0);
+		String digestValue = digestMethod.getAttribute("Algorithm");
+		assertEquals(digestValue, DigestMethod.SHA256);
+	}
+
+	@Test
+	public void testManifestForAuditAddsTransforms() throws Exception {
+
+		amt.setJID("JID");
+		amt.setLogger(logger);
+
+		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
+		assertNotNull(appMeta);
+		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
+		assertNotNull(jc);
+
+		doc = utils.marshal(jc, appMeta);
+
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+
+		method.setAccessible(true);
+		method.invoke(utils, doc, DMType.SHA256, "buffer", MessageType.JALP_AUDIT_MSG);
+
+		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
+		assertNotNull(manifest);
+
+		Element transform = (Element)manifest.getElementsByTagName("Transform").item(0);
+		assertNotNull(transform);
+		String transformValue = transform.getAttribute("Algorithm");
+		assertEquals(transformValue, "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments");
+	}
+
+	@Test(expected = JALException.class)
+	public void testManifestWithNullDMTypeThrowsException() throws Exception {
+
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		method.setAccessible(true);
+
+		try{
+			method.invoke(utils, doc, null, "buffer", MessageType.JALP_LOG_MSG);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test(expected = JALException.class)
+	public void testManifestWithNullMessageTypeThrowsException() throws Exception {
+
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		method.setAccessible(true);
+
+		try{
+			method.invoke(utils, doc, DMType.SHA256, "buffer", null);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
 	}
 }
