@@ -30,6 +30,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import static org.junit.Assert.*;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -65,6 +75,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import mockit.Capturing;
 import mockit.Expectations;
 import mockit.Mock;
+import mockit.Mocked;
+import mockit.Mockit;
 import mockit.MockUp;
 import mockit.NonStrictExpectations;
 
@@ -75,14 +87,27 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.etsy.net.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
+import com.tresys.jalop.common.JALUtils;
+import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.LoggerXML;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
+
+import com.etsy.net.ConnectionHeader;
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.etsy.net.JUDS;
+import com.etsy.net.UnixDomainSocket;
+import com.etsy.net.UnixDomainSocketClient;
+import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
+import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream.*;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 public class TestJALUtils {
 
@@ -504,6 +529,117 @@ public class TestJALUtils {
 			method.invoke(utils, doc, prod);
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
+		}
+	}
+	
+	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
+		@Mock
+		public void $init(String socketFile, int type) {
+			out = new UnixDomainSocketOutputStream();
+		}
+	}
+	
+	public static class MockUnixDomainSocketOutputStream {
+		@Mock
+		public void sendmsg(byte[] data, byte[] meta, ConnectionHeader header) {}
+	}
+	
+	public static class MockUnixDomainSocket {
+		@Mocked UnixDomainSocketOutputStream out;
+		
+		@Mock
+		public void $init() {}
+		
+		@Mock
+		public OutputStream getOutputStream() {
+			UnixDomainSocketClient udsc;
+			try {
+				udsc = new UnixDomainSocketClient("socket", 1);
+			} catch (Exception e) {
+				return null;
+			}
+			out = udsc.new UnixDomainSocketOutputStream();
+			return out;
+		}
+	}
+	
+	@Test
+	public void testSendWorksWithNullBuffer() throws Exception {
+		LoggerType logger = new LoggerType();
+		LoggerXML xml = new LoggerXML(logger);
+		xml.prepareSend("hostname", "app_name");
+		Document doc = xml.marshal();
+		
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, MessageType.JALP_LOG_MSG});
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+	
+	@Test
+	public void testSendWorksWithNonNullBuffer() throws Exception {
+		LoggerType logger = new LoggerType();
+		LoggerXML xml = new LoggerXML(logger);
+		xml.prepareSend("hostname", "app_name");
+		Document doc = xml.marshal();
+		
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", (String)"buffer", MessageType.JALP_LOG_MSG});
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+	
+	@Test(expected = JALException.class)
+	public void testSendThrowsJALExceptionWhenSocketIsNull() throws Exception {
+		LoggerType logger = new LoggerType();
+		LoggerXML xml = new LoggerXML(logger);
+		xml.prepareSend("hostname", "app_name");
+		Document doc = xml.marshal();
+		
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{doc, null, (String)"buffer", MessageType.JALP_LOG_MSG});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
+	}
+	
+	@Test(expected = JALException.class)
+	public void testSendThrowsJALExceptionWhenSocketIsEmptyString() throws Exception {
+		LoggerType logger = new LoggerType();
+		LoggerXML xml = new LoggerXML(logger);
+		xml.prepareSend("hostname", "app_name");
+		Document doc = xml.marshal();
+		
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{doc, (String)"", (String)"buffer", MessageType.JALP_LOG_MSG});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
 		}
 	}
 }
