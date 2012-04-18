@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -641,5 +642,125 @@ public class TestJALUtils {
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
+	}
+
+	@Test
+	public void testProcessSendWorks() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {}
+		};
+
+		utils.processSend(prod, "String buffer");
+	}
+
+	@Test
+	public void testProcessSendCallsCreateManifest() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+				NodeList manifestList = doc.getElementsByTagName("Manifest");
+				assertTrue(manifestList.getLength() > 0);
+				Node manifest = manifestList.item(0);
+				Node signature = doc.getElementsByTagName("Signature").item(0);
+				assertEquals(signature.getNextSibling(), manifest);
+			}
+		};
+
+		utils.processSend(prod, "String buffer");
+	}
+
+	@Test
+	public void testProcessSendDoesntCallCreateManifest() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, null, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+				NodeList manifest = doc.getElementsByTagName("Manifest");
+				assertTrue(manifest.getLength() < 1);
+			}
+		};
+
+		utils.processSend(prod, "");
+	}
+
+	@Test
+	public void testProcessSendCallsSign() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+				NodeList signature = doc.getElementsByTagName("Signature");
+				assertTrue(signature.getLength() > 0);
+			}
+		};
+
+		utils.processSend(prod, "String buffer");
+	}
+
+	@Test
+	public void testProcessSendDoesntCallSign() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+				NodeList signature = doc.getElementsByTagName("Signature");
+				assertTrue(signature.getLength() < 1);
+			}
+		};
+
+		utils.processSend(prod, "String buffer");
+	}
+
+	@Test(expected = JALException.class)
+	public void testProcessSendThrowsExceptionWithNullProducer() throws Exception {
+		utils.processSend(null, null);
+	}
+
+	@Test(expected = JALException.class)
+	public void testProcessSendThrowsExceptionWithNullXML() throws Exception {
+		JALProducer prod = new JALProducer(null, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+
+		utils.processSend(prod, "String buffer");
 	}
 }
