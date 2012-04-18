@@ -30,20 +30,40 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.DigestMethod;
+import javax.xml.crypto.dsig.XMLSignContext;
+import javax.xml.crypto.dsig.XMLSignature;
+import javax.xml.crypto.dsig.XMLSignatureException;
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
+import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
+import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import mockit.Capturing;
+import mockit.Expectations;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.NonStrictExpectations;
@@ -57,6 +77,9 @@ import org.w3c.dom.NodeList;
 
 import com.etsy.net.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALUtils.DMType;
+import com.tresys.jalop.producer.ApplicationMetadataXML;
+import com.tresys.jalop.producer.JALProducer;
+import com.tresys.jalop.producer.LoggerXML;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
@@ -239,6 +262,246 @@ public class TestJALUtils {
 
 		try{
 			method.invoke(utils, doc, DMType.SHA256, "buffer", null);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test
+	public void testSignWorks() throws Exception {
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		assertNotNull(prod);
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+		assertNotNull(doc);
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		method.invoke(utils, doc, prod);
+
+		Element signature = (Element)doc.getElementsByTagName("Signature").item(0);
+		assertNotNull(signature);
+
+		Element canMethod = (Element)signature.getElementsByTagName("CanonicalizationMethod").item(0);
+		String canMethodValue = canMethod.getAttribute("Algorithm");
+		assertEquals(canMethodValue, "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments");
+
+		Element sigMethod = (Element)signature.getElementsByTagName("SignatureMethod").item(0);
+		String sigMethodValue = sigMethod.getAttribute("Algorithm");
+		assertEquals(sigMethodValue, "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256");
+
+		String uri = "#xpointer(id(\'"+xml.getJID()+"\'))";
+		Element reference = (Element)signature.getElementsByTagName("Reference").item(0);
+		String uriValue = reference.getAttribute("URI");
+		assertEquals(uriValue, uri);
+
+		NodeList transforms = reference.getElementsByTagName("Transform");
+		assertEquals(transforms.getLength(), 2);
+
+		Element transform1 = (Element)transforms.item(0);
+		String transform1Value = transform1.getAttribute("Algorithm");
+		assertEquals(transform1Value, "http://www.w3.org/2000/09/xmldsig#enveloped-signature");
+
+		Element transform2 = (Element)transforms.item(1);
+		String transform2Value = transform2.getAttribute("Algorithm");
+		assertEquals(transform2Value, "http://www.w3.org/2001/10/xml-exc-c14n#WithComments");
+
+		Element digestMethod = (Element)reference.getElementsByTagName("DigestMethod").item(0);
+		String digestValue = digestMethod.getAttribute("Algorithm");
+		assertEquals(digestValue, DigestMethod.SHA256);
+	}
+
+	@Test
+	public void testSignAddsCertWhenNotNull() throws Exception {
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		CertificateFactory cf = CertificateFactory.getInstance("X.509");
+		InputStream in = new FileInputStream("test-input/cert");
+		X509Certificate cert = (X509Certificate)cf.generateCertificate(in);
+		in.close();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), cert, DMType.SHA256, "/path/to/socket");
+		assertNotNull(prod);
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+		assertNotNull(doc);
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		method.invoke(utils, doc, prod);
+
+		Element x509Cert = (Element)doc.getElementsByTagName("X509Certificate").item(0);
+		assertNotNull(x509Cert);
+	}
+
+	@Test(expected = InvalidAlgorithmParameterException.class)
+	public void testSignThrowsExceptionWithBadAlgorithmParameter() throws Exception {
+
+		new Expectations() {
+			XMLSignatureFactory xmlSigFactory;
+			{
+				XMLSignatureFactory.getInstance(anyString); returns(xmlSigFactory);
+				xmlSigFactory.newTransform((String)any, (TransformParameterSpec)any); result = new InvalidAlgorithmParameterException();
+			}
+		};
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		try{
+			method.invoke(utils, doc, prod);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test(expected = NoSuchAlgorithmException.class)
+	public void testSignThrowsExceptionWithBadAlgorithm() throws Exception {
+
+		new Expectations() {
+			XMLSignatureFactory xmlSigFactory;
+			{
+				XMLSignatureFactory.getInstance(anyString); returns(xmlSigFactory);
+				xmlSigFactory.newTransform((String)any, (TransformParameterSpec)any); result = new NoSuchAlgorithmException();
+			}
+		};
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		try{
+			method.invoke(utils, doc, prod);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test(expected = KeyException.class)
+	public void testSignThrowsKeyException() throws Exception {
+
+		new Expectations() {
+			XMLSignatureFactory xmlSigFactory;
+			KeyInfoFactory keyInfoFactory;
+			{
+				XMLSignatureFactory.getInstance(anyString); returns(xmlSigFactory);
+				xmlSigFactory.newTransform(anyString, (TransformParameterSpec)null); returns(null);
+				xmlSigFactory.newTransform(anyString, (TransformParameterSpec)null); returns(null);
+				xmlSigFactory.newDigestMethod(anyString, null); returns(null);
+				xmlSigFactory.newReference(anyString, null, null, anyString, anyString); returns(null);
+				xmlSigFactory.newCanonicalizationMethod(anyString, (C14NMethodParameterSpec)null); returns(null);
+				xmlSigFactory.newSignatureMethod(anyString, null); returns(null);
+				xmlSigFactory.newSignedInfo(null, null, Collections.singletonList(null)); returns(null);
+				xmlSigFactory.getKeyInfoFactory(); returns(keyInfoFactory);
+			}
+		};
+		new NonStrictExpectations() {
+			@Capturing KeyInfoFactory k;
+			{
+				k.newKeyValue((PublicKey)any); result = new KeyException();
+			}
+		};
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		try{
+			method.invoke(utils, doc, prod);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test(expected = XMLSignatureException.class)
+	public void testSignThrowsXMLSignatureException() throws Exception {
+
+		new NonStrictExpectations() {
+			@Capturing XMLSignature x;
+			{
+				x.sign((XMLSignContext)any); result = new XMLSignatureException();
+			}
+		};
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		try{
+			method.invoke(utils, doc, prod);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test(expected = MarshalException.class)
+	public void testSignThrowsMarshalException() throws Exception {
+
+		new NonStrictExpectations() {
+			@Capturing XMLSignature x;
+			{
+				x.sign((XMLSignContext)any); result = new MarshalException();
+			}
+		};
+
+		LoggerXML loggerXml = new LoggerXML(logger);
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		ApplicationMetadataXML xml = prod.getXml();
+		assertNotNull(xml);
+		xml.prepareSend("Host Name", "Application Name");
+		doc = xml.marshal();
+
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		method.setAccessible(true);
+		try{
+			method.invoke(utils, doc, prod);
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
 		}
