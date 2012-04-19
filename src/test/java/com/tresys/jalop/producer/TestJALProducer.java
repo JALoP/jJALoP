@@ -11,8 +11,14 @@ import java.security.KeyPairGenerator;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import org.junit.Test;
+import mockit.Mock;
+import mockit.MockUp;
 
+import org.junit.Test;
+import org.w3c.dom.Document;
+
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 
@@ -112,6 +118,19 @@ public class TestJALProducer {
 		JALProducer prod = new JALProducer();
 		prod.setSocketFile("/path/to/socket");
 		assertEquals("/path/to/socket", prod.getSocketFile());
+	}
+
+	@Test
+	public void testJalpLogWorks() throws Exception{
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(JALProducer producer, String buffer) throws Exception {}
+		};
+
+		JALProducer prod = new JALProducer();
+		prod.jalpLog("buffer");
+		assertEquals(prod.getMessageType(), MessageType.JALP_LOG_MSG);
 	}
 
 }
