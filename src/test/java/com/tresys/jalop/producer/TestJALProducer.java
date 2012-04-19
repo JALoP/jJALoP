@@ -158,4 +158,62 @@ public class TestJALProducer {
 		prod.jalpAudit("");
 	}
 
+	@Test
+	public void testJalpJournalWithBufferWorks() throws Exception {
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(JALProducer producer, String buffer) throws Exception {}
+		};
+
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal("buffer", false);
+		assertEquals(prod.getMessageType(), MessageType.JALP_JOURNAL_MSG);
+	}
+
+	@Test
+	public void testJalpJournalWithPathWorks() throws Exception {
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(JALProducer producer, String buffer) throws Exception {}
+		};
+
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal("test-input/testBuffer", true);
+		assertEquals(prod.getMessageType(), MessageType.JALP_JOURNAL_MSG);
+	}
+
+	@Test
+	public void testJalpJournalWithPathReadsBuffer() throws Exception {
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(JALProducer producer, String buffer) throws Exception {
+				assertEquals(buffer, "Test buffer in a file.");
+			}
+		};
+
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal("test-input/testBuffer", true);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpJournalThrowsExceptionWithNullInput() throws Exception {
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal(null, true);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpJournalThrowsExceptionWithBlankInput() throws Exception {
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal("", true);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpJournalThrowsExceptionWithNullBoolean() throws Exception {
+		JALProducer prod = new JALProducer();
+		prod.jalpJournal("input", null);
+	}
+
 }
