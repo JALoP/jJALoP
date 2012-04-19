@@ -15,9 +15,9 @@ import mockit.Mock;
 import mockit.MockUp;
 
 import org.junit.Test;
-import org.w3c.dom.Document;
 
 import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
@@ -131,6 +131,31 @@ public class TestJALProducer {
 		JALProducer prod = new JALProducer();
 		prod.jalpLog("buffer");
 		assertEquals(prod.getMessageType(), MessageType.JALP_LOG_MSG);
+	}
+
+	@Test
+	public void testJalpAuditWorks() throws Exception{
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(JALProducer producer, String buffer) throws Exception {}
+		};
+
+		JALProducer prod = new JALProducer();
+		prod.jalpAudit("buffer");
+		assertEquals(prod.getMessageType(), MessageType.JALP_AUDIT_MSG);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpAuditThrowsExceptionWithNullBuffer() throws Exception{
+		JALProducer prod = new JALProducer();
+		prod.jalpAudit(null);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpAuditThrowsExceptionWithBlankBuffer() throws Exception{
+		JALProducer prod = new JALProducer();
+		prod.jalpAudit("");
 	}
 
 }
