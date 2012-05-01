@@ -30,19 +30,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import static org.junit.Assert.*;
-
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.InvalidAlgorithmParameterException;
@@ -76,9 +67,9 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import mockit.Capturing;
 import mockit.Expectations;
 import mockit.Mock;
+import mockit.MockUp;
 import mockit.Mocked;
 import mockit.Mockit;
-import mockit.MockUp;
 import mockit.NonStrictExpectations;
 
 import org.junit.Before;
@@ -88,27 +79,18 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.etsy.net.ConnectionHeader;
+import com.etsy.net.ConnectionHeader.MessageType;
+import com.etsy.net.UnixDomainSocket;
+import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
+import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
-import com.tresys.jalop.common.JALUtils;
-import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.LoggerXML;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
-
-import com.etsy.net.ConnectionHeader;
-import com.etsy.net.ConnectionHeader.MessageType;
-import com.etsy.net.JUDS;
-import com.etsy.net.UnixDomainSocket;
-import com.etsy.net.UnixDomainSocketClient;
-import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
-import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream.*;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 public class TestJALUtils {
 
@@ -220,10 +202,10 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
 
 		method.setAccessible(true);
-		method.invoke(utils, doc, DMType.SHA256, "buffer", MessageType.JALP_LOG_MSG);
+		method.invoke(utils, doc, DMType.SHA256, "buffer", false, MessageType.JALP_LOG_MSG);
 
 		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
 		assertNotNull(manifest);
@@ -253,10 +235,10 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
 
 		method.setAccessible(true);
-		method.invoke(utils, doc, DMType.SHA256, "buffer", MessageType.JALP_AUDIT_MSG);
+		method.invoke(utils, doc, DMType.SHA256, "buffer", false, MessageType.JALP_AUDIT_MSG);
 
 		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
 		assertNotNull(manifest);
@@ -270,11 +252,11 @@ public class TestJALUtils {
 	@Test(expected = JALException.class)
 	public void testManifestWithNullDMTypeThrowsException() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
 		method.setAccessible(true);
 
 		try{
-			method.invoke(utils, doc, null, "buffer", MessageType.JALP_LOG_MSG);
+			method.invoke(utils, doc, null, "buffer", false, MessageType.JALP_LOG_MSG);
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
 		}
@@ -283,11 +265,71 @@ public class TestJALUtils {
 	@Test(expected = JALException.class)
 	public void testManifestWithNullMessageTypeThrowsException() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
 		method.setAccessible(true);
 
 		try{
-			method.invoke(utils, doc, DMType.SHA256, "buffer", null);
+			method.invoke(utils, doc, DMType.SHA256, "buffer", false, null);
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test
+	public void testDigestWorks() throws Exception {
+
+		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
+		method.setAccessible(true);
+
+		try{
+			byte[] buffer = (byte[]) method.invoke(utils, "buffer", false, DMType.SHA256);
+
+			StringBuffer sb = new StringBuffer();
+			for(byte b : buffer) {
+				sb.append(String.format("%02x", b));
+			}
+			assertEquals("d0ca8c2ac0dab879bf27bfb58227b301db17f5ca716d065e7c884253d3ab99e4", sb.toString());
+
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test
+	public void testDigestWorksWithPath() throws Exception {
+
+		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
+		method.setAccessible(true);
+
+		try{
+			byte[] buffer = (byte[]) method.invoke(utils, "test-input/testBuffer", true, DMType.SHA256);
+
+			StringBuffer sb = new StringBuffer();
+			for(byte b : buffer) {
+				sb.append(String.format("%02x", b));
+			}
+			assertEquals("5126792129f6e60ecb250b7f77beb0156854e92e20c7517362d6786e77c21110", sb.toString());
+
+		} catch(InvocationTargetException ite) {
+			throw (Exception)ite.getCause();
+		}
+	}
+
+	@Test
+	public void testDigestWorksWithEvenSizedBuffer() throws Exception {
+
+		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
+		method.setAccessible(true);
+
+		try{
+			byte[] buffer = (byte[]) method.invoke(utils, "test-input/evenBuffer", true, DMType.SHA256);
+
+			StringBuffer sb = new StringBuffer();
+			for(byte b : buffer) {
+				sb.append(String.format("%02x", b));
+			}
+			assertEquals("bb7b910153979c9dc16307db01c1325b17b4424c5c2b67fe52e527449abce7ef", sb.toString());
+
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
 		}
@@ -660,7 +702,7 @@ public class TestJALUtils {
 			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {}
 		};
 
-		utils.processSend(prod, "String buffer");
+		utils.processSend(prod, "String buffer", false);
 	}
 
 	@Test
@@ -685,7 +727,7 @@ public class TestJALUtils {
 			}
 		};
 
-		utils.processSend(prod, "String buffer");
+		utils.processSend(prod, "String buffer", false);
 	}
 
 	@Test
@@ -707,7 +749,7 @@ public class TestJALUtils {
 			}
 		};
 
-		utils.processSend(prod, "");
+		utils.processSend(prod, "", false);
 	}
 
 	@Test
@@ -729,7 +771,7 @@ public class TestJALUtils {
 			}
 		};
 
-		utils.processSend(prod, "String buffer");
+		utils.processSend(prod, "String buffer", false);
 	}
 
 	@Test
@@ -749,18 +791,18 @@ public class TestJALUtils {
 			}
 		};
 
-		utils.processSend(prod, "String buffer");
+		utils.processSend(prod, "String buffer", false);
 	}
 
 	@Test(expected = JALException.class)
 	public void testProcessSendThrowsExceptionWithNullProducer() throws Exception {
-		utils.processSend(null, null);
+		utils.processSend(null, null, false);
 	}
 
 	@Test(expected = JALException.class)
 	public void testProcessSendThrowsExceptionWithNullXML() throws Exception {
 		JALProducer prod = new JALProducer(null, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
-		utils.processSend(prod, "String buffer");
+		utils.processSend(prod, "String buffer", false);
 	}
 }

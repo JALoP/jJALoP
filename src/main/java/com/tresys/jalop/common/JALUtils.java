@@ -26,8 +26,9 @@
  */
 package com.tresys.jalop.common;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.StringWriter;
+import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,10 +92,12 @@ public class JALUtils {
 	 * sign the document and create the manifest if applicable then continues with send.
 	 *
 	 * @param producer	the JALProducer
-	 * @param buffer	a String which is the buffer
+	 * @param buffer	a String which is either a buffer or a path to a file
+	 * @param isPath	a Boolean, true if the input is a path to a file,
+	 * 						false if the input is a buffer
 	 * @throws Exception
 	 */
-	public static void processSend(JALProducer producer, String buffer) throws Exception {
+	public static void processSend(JALProducer producer, String buffer, Boolean isPath) throws Exception {
 
 		if(producer == null) {
 			throw new JALException("The JALProducer must not be null.");
@@ -110,7 +113,7 @@ public class JALUtils {
 		Document doc = xml.marshal();
 
 		if(producer.getDigestMethod() != null && buffer != null && !"".equals(buffer)) {
-			createManifest(doc, producer.getDigestMethod(), buffer, producer.getMessageType());
+			createManifest(doc, producer.getDigestMethod(), buffer, isPath, producer.getMessageType());
 		}
 
 		if(producer.getPrivateKey() != null && producer.getPublicKey() != null) {
@@ -129,7 +132,7 @@ public class JALUtils {
 	/**
 	 * Builds a document and marshals the xml into the document. 
 	 * This also validates the xml against the given schema.
-	 * 
+	 *
 	 * @param jc		the JAXBContext of the correct class
 	 * @param element	the JAXBElement created by ObjectFactory for the correct class
 	 * @return	the marshaled document
@@ -233,17 +236,20 @@ public class JALUtils {
 	 * An enum for the different types of digest methods that can be used
 	 */
 	public enum DMType {
-		SHA256 (DigestMethod.SHA256),
-		SHA512 (DigestMethod.SHA512),
-		SHA384 ("http://www.w3.org/2001/04/xmldsig-more#sha384");
+		SHA256 (DigestMethod.SHA256, "SHA-256"),
+		SHA512 (DigestMethod.SHA512, "SHA-512"),
+		SHA384 ("http://www.w3.org/2001/04/xmldsig-more#sha384", "SHA-384");
 
 		private String digestMethod;
+		private String digestType;
 
-		DMType(String digestMethod) {
+		DMType(String digestMethod, String digestType) {
 			this.digestMethod = digestMethod;
+			this.digestType = digestType;
 		}
 
 		private String digestMethod() { return digestMethod; }
+		private String digestType() { return digestType; }
 	}
 
 	/**
@@ -252,11 +258,13 @@ public class JALUtils {
 	 *
 	 * @param doc			the signed Document
 	 * @param dmType		the DMType which will determine the digest method used
-	 * @param buffer		a String which is the buffer
+	 * @param input			a String which is either a buffer or a path to a file
+	 * @param isPath		a Boolean, true if the input is a path to a file,
+	 * 							false if the input is a buffer
 	 * @param messageType	the MessageType
 	 * @throws Exception
 	 */
-	private static void createManifest(Document doc, DMType dmType, String buffer, MessageType messageType) throws Exception {
+	private static void createManifest(Document doc, DMType dmType, String input, Boolean isPath, MessageType messageType) throws Exception {
 
 		if(dmType == null || messageType == null) {
 			throw new JALException("DMType and MessageType must be set in the JALProducer first.");
@@ -271,7 +279,7 @@ public class JALUtils {
 		digestMethod.setAlgorithm(dmType.digestMethod());
 
 		ref.setDigestMethod(digestMethod);
-		ref.setDigestValue(buffer.getBytes());
+		ref.setDigestValue(createDigest(input, isPath, dmType));
 
 		if(MessageType.JALP_AUDIT_MSG.equals(messageType)) {
 			TransformType transform = new TransformType();
@@ -287,8 +295,37 @@ public class JALUtils {
 		JAXBElement<ManifestType> man = of.createManifest(manifest);
 		JAXBContext jc = JAXBContext.newInstance(ManifestType.class.getPackage().getName());
 		Document manifestDocument = marshal(jc, man);
-
 		doc.getDocumentElement().appendChild(doc.importNode(manifestDocument.getFirstChild(),true));
+	}
+
+	/**
+	 * Creates the digest for the buffer. If isPath is true, this reads the file into a buffer
+	 * in chunks, adding each chunk to the MessageDigest. When the file has been read completely
+	 * it is digested.
+	 *
+	 * @param input		a String which is either a buffer or a path to a file
+	 * @param isPath	a Boolean, true if the input is a path to a file,
+	 * 						false if the input is a buffer
+	 * @param dmType	the DMType which will determine the digest method used
+	 * @return
+	 * @throws Exception
+	 */
+	private static byte[] createDigest(String input, Boolean isPath, DMType dmType) throws Exception {
+
+		MessageDigest md = MessageDigest.getInstance(dmType.digestType());
+		if(Boolean.TRUE.equals(isPath)) {
+
+			FileInputStream f = new FileInputStream(input);
+			byte[] buffer = new byte[8192];
+			int read;
+			while((read = f.read(buffer, 0, buffer.length)) > 0) {
+				md.update(buffer, 0, read);
+			}
+		} else {
+			md.update(input.getBytes());
+		}
+
+		return md.digest();
 	}
 
 	/**
@@ -341,7 +378,7 @@ public class JALUtils {
 
 	/**
 	 * Creates a calendar with the current date and time to set the timestamp
-	 * 
+	 *
 	 * @return	XMLGregorianCalendar with the current date
 	 * @throws Exception
 	 */

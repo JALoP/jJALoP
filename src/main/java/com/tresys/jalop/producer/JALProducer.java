@@ -27,8 +27,6 @@
 
 package com.tresys.jalop.producer;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -37,7 +35,6 @@ import com.etsy.net.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
-import com.tresys.jalop.producer.ApplicationMetadataXML;
 
 public class JALProducer {
 	
@@ -248,26 +245,35 @@ public class JALProducer {
 	/**
 	 * Sets the messageType to JALP_LOG_MSG and calls processSend in JALUtils
 	 *
-	 * @param buffer	optional, a String which is the buffer
+	 * @param input		optional, a String which is either a buffer or a path to a file
+	 * @param isPath	optional, a Boolean, true if the input is a path to a file,
+	 * 					false if the input is a buffer
 	 * @throws Exception
 	 */
-	public void jalpLog(String buffer) throws Exception {
+	public void jalpLog(String input, Boolean isPath) throws Exception {
+		if(isPath == null && input != null && !"".equals(input)) {
+			throw new JALException("Boolean isPath is required if a buffer is provided.");
+		}
 		this.messageType = MessageType.JALP_LOG_MSG;
-		JALUtils.processSend(this, buffer);
+		JALUtils.processSend(this, input, isPath);
 	}
 
 	/**
 	 * Sets the messageType to JALP_AUDIT_MSG and calls processSend in JALUtils
 	 *
-	 * @param buffer	required, a String which is the buffer
+	 * @param input		required, a String which is either a buffer or a path to a file
+	 * @param isPath	required, a Boolean, true if the input is a path to a file,
+	 * 					false if the input is a buffer
 	 * @throws Exception
 	 */
-	public void jalpAudit(String buffer) throws Exception {
-		if(buffer == null || "".equals(buffer)) {
+	public void jalpAudit(String input, Boolean isPath) throws Exception {
+		if(input == null || "".equals(input)) {
 			throw new JALException("String buffer is required");
+		} else if(isPath == null) {
+			throw new JALException("Boolean isPath is required");
 		}
 		this.messageType = MessageType.JALP_AUDIT_MSG;
-		JALUtils.processSend(this, buffer);
+		JALUtils.processSend(this, input, isPath);
 	}
 
 	/**
@@ -285,22 +291,7 @@ public class JALProducer {
 			throw new JALException("Boolean isPath is required");
 		}
 		this.messageType = MessageType.JALP_JOURNAL_MSG;
-
-		if(Boolean.TRUE.equals(isPath)) {
-			StringBuilder sb = new StringBuilder();
-
-			BufferedReader reader = new BufferedReader(new FileReader(input));
-			char[] buffer = new char[8192];
-			int read;
-			while((read = reader.read(buffer, 0, buffer.length)) > 0) {
-				sb.append(buffer, 0, read);
-			}
-
-			JALUtils.processSend(this, sb.toString());
-
-		} else {
-			JALUtils.processSend(this, input);
-		}
+		JALUtils.processSend(this, input, isPath);
 	}
 
 }
