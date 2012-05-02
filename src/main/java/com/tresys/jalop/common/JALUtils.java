@@ -84,7 +84,7 @@ import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
 
 public class JALUtils {
 	
-	public static final String SCHEMA_LOCATION = "src/main/java/com/tresys/jalop/schemas/applicationMetadataTypes.xsd";
+	public static final String SCHEMA_LOCATION = "/com/tresys/jalop/applicationMetadataTypes.xsd";
 
 	/**
 	 * Starts the send process. Calls methods to set fields,
@@ -140,7 +140,7 @@ public class JALUtils {
 		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
 		SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-		Schema schema = sf.newSchema(new File(SCHEMA_LOCATION));
+		Schema schema = sf.newSchema(JALUtils.class.getResource(SCHEMA_LOCATION));
 		m.setSchema(schema);
 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
