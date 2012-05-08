@@ -40,7 +40,7 @@ package: universal
 	tar pczf juds-$(VERSION)-universal.tar.gz juds-$(VERSION)-universal
 	rm -rf juds-$(VERSION)-universal
 
-juds-$(VERSION).jar: $(PACKAGE_DIR)/UnixDomainSocket.class $(PACKAGE_DIR)/UnixDomainSocketClient.class $(PACKAGE_DIR)/UnixDomainSocketServer.class $(PACKAGE_DIR)/ConnectionHeader.class nativelib $(PACKAGE_DIR)/JUDS.class
+juds-$(VERSION).jar: $(PACKAGE_DIR)/UnixDomainSocket.class $(PACKAGE_DIR)/UnixDomainSocketClient.class $(PACKAGE_DIR)/UnixDomainSocketServer.class $(PACKAGE_DIR)/ConnectionHeader.class $(PACKAGE_DIR)/MessageHeader.class nativelib $(PACKAGE_DIR)/JUDS.class
 	$(JAR) cf $@ $(PACKAGE_DIR)/*.class $(LIB64) $(LIB32)
 
 nativelib: $(PACKAGE_DIR)/UnixDomainSocket.c $(PACKAGE_DIR)/UnixDomainSocket.h
@@ -65,6 +65,9 @@ $(PACKAGE_DIR)/UnixDomainSocketServer.class: $(PACKAGE_DIR)/UnixDomainSocketServ
 	$(JAVAC) $(JAVA_FLAGS) $?
 
 $(PACKAGE_DIR)/ConnectionHeader.class: $(PACKAGE_DIR)/ConnectionHeader.java
+	$(JAVAC) $(JAVA_FLAGS) $?
+
+$(PACKAGE_DIR)/MessageHeader.class: $(PACKAGE_DIR)/MessageHeader.java
 	$(JAVAC) $(JAVA_FLAGS) $?
 
 install: nativelib
