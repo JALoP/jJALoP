@@ -31,7 +31,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
@@ -272,6 +272,7 @@ public class JALProducer {
 		} else if(isPath == null) {
 			throw new JALException("Boolean isPath is required");
 		}
+
 		this.messageType = MessageType.JALP_AUDIT_MSG;
 		JALUtils.processSend(this, input, isPath);
 	}

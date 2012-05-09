@@ -26,7 +26,10 @@
  */
 package com.tresys.jalop.common;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
@@ -69,11 +72,7 @@ import javax.xml.validation.SchemaFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import com.etsy.net.ConnectionHeader;
-import com.etsy.net.ConnectionHeader.MessageType;
-import com.etsy.net.JUDS;
-import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
-import com.etsy.net.UnixDomainSocketClient;
+import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
@@ -126,7 +125,7 @@ public class JALUtils {
 			doc.getDocumentElement().appendChild(manifest);
 		}
 
-		send(doc, producer.getSocketFile(), buffer, producer.getMessageType());
+		send(doc, producer.getSocketFile(), buffer, isPath, producer.getMessageType());
 	}
 
 	/**
@@ -316,7 +315,7 @@ public class JALUtils {
 		if(Boolean.TRUE.equals(isPath)) {
 
 			FileInputStream f = new FileInputStream(input);
-			byte[] buffer = new byte[8192];
+			byte[] buffer = new byte[SendUtils.BUFFER_SIZE];
 			int read;
 			while((read = f.read(buffer, 0, buffer.length)) > 0) {
 				md.update(buffer, 0, read);
@@ -329,21 +328,22 @@ public class JALUtils {
 	}
 
 	/**
-	 * Creates a connection header and uses a UnixDomainSocketOutputStream to
-	 * send the buffer and application metadata to the local store with sendmsg.
+	 * Changes input to an inputstream and doc to a String to prepare for sending
+	 * and then calls createAndSendHeaders
 	 *
 	 * @param doc			the marshaled xml doc
 	 * @param socketFile	the socket file
-	 * @param buffer		a String which is the buffer to send
+	 * @param input			a String which is the buffer to send
+	 * @param isPath		a Boolean, true if the input is a path to a file,
+	 * 							false if the input is a buffer
 	 * @param messageType	the type of message to send
 	 * @throws Exception
 	 */
-	private static void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+	private static void send(Document doc, String socketFile, String input, Boolean isPath, MessageType messageType) throws Exception {
+		if(doc == null && (input == null || "".equals(input))) {
+			throw new JALException("Error in JALUtils.send - doc and buffer cannot both be null");
+		}
 		if(socketFile != null && !"".equals(socketFile)) {
-			UnixDomainSocketClient socket = new UnixDomainSocketClient(socketFile,
-					JUDS.SOCK_STREAM);
-
-			UnixDomainSocketOutputStream out = (UnixDomainSocketOutputStream)socket.getOutputStream();
 
 			TransformerFactory transFactory = TransformerFactory.newInstance();
 			Transformer trans = transFactory.newTransformer();
@@ -351,25 +351,29 @@ public class JALUtils {
 			trans.transform(new DOMSource(doc), new StreamResult(writer));
 			String appMeta = writer.toString();
 
-			int bufferLength = 0;
-			byte[] bufferBytes = null;
-			if(buffer != null) {
-				bufferBytes = buffer.getBytes();
-				bufferLength = bufferBytes.length;
-			}
-
-			int appMetaLength = 0;
+			long appMetaLength = 0;
 			byte[] appMetaBytes = null;
 			if(appMeta != null) {
 				appMetaBytes = appMeta.getBytes();
 				appMetaLength = appMetaBytes.length;
 			}
 
-			ConnectionHeader connectionHeader = new ConnectionHeader(1, messageType, bufferLength, appMetaLength);
+			long bufferLength = 0;
+			InputStream is = null;
 
-			out.sendmsg(bufferBytes, appMetaBytes, connectionHeader);
+			if(input != null) {
+				if(isPath) {
+					File file = new File(input);
+					bufferLength = file.length();
+					is = new FileInputStream(input);
 
-			socket.close();
+				} else {
+					is = new ByteArrayInputStream(input.getBytes());
+					bufferLength = input.length();
+				}
+			}
+
+			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, appMetaBytes, socketFile);
 
 		} else {
 			throw new JALException("Error in JALUtils.send - socketFile path must be set in producer");

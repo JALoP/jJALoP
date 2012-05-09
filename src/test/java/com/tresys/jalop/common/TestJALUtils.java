@@ -79,11 +79,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.etsy.net.ConnectionHeader;
-import com.etsy.net.ConnectionHeader.MessageType;
+import com.etsy.net.MessageHeader;
 import com.etsy.net.UnixDomainSocket;
 import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
 import com.etsy.net.UnixDomainSocketClient;
+import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.JALProducer;
@@ -328,7 +328,7 @@ public class TestJALUtils {
 			for(byte b : buffer) {
 				sb.append(String.format("%02x", b));
 			}
-			assertEquals("bb7b910153979c9dc16307db01c1325b17b4424c5c2b67fe52e527449abce7ef", sb.toString());
+			assertEquals("87d0289199665619210ecae87c08d49f05bf4566d5a5035d6c479f2a11fc6cde", sb.toString());
 
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
@@ -584,7 +584,7 @@ public class TestJALUtils {
 	
 	public static class MockUnixDomainSocketOutputStream {
 		@Mock
-		public void sendmsg(byte[] data, byte[] meta, ConnectionHeader header) {}
+		public void sendmsg(MessageHeader header) {}
 	}
 	
 	public static class MockUnixDomainSocket {
@@ -616,11 +616,16 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
+		new MockUp<SendUtils>() {
+			@Mock
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, byte[] meta, String socketFile) throws Exception {}
+		};
+
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, null, MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
@@ -636,11 +641,16 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
+		new MockUp<SendUtils>() {
+			@Mock
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, byte[] meta, String socketFile) throws Exception {}
+		};
+
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", (String)"buffer", MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", (String)"buffer", false, MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
@@ -656,11 +666,11 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, null, (String)"buffer", MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, null, (String)"buffer", false, MessageType.JALP_LOG_MSG});
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
@@ -678,9 +688,9 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 		
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"", (String)"buffer", MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"", (String)"buffer", false, MessageType.JALP_LOG_MSG});
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
@@ -699,7 +709,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {}
+			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {}
 		};
 
 		utils.processSend(prod, "String buffer", false);
@@ -718,7 +728,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
 				NodeList manifestList = doc.getElementsByTagName("Manifest");
 				assertTrue(manifestList.getLength() > 0);
 				Node manifest = manifestList.item(0);
@@ -743,7 +753,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
 				NodeList manifest = doc.getElementsByTagName("Manifest");
 				assertTrue(manifest.getLength() < 1);
 			}
@@ -765,7 +775,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
 				NodeList signature = doc.getElementsByTagName("Signature");
 				assertTrue(signature.getLength() > 0);
 			}
@@ -785,7 +795,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, String buffer, MessageType messageType) throws Exception {
+			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
 				NodeList signature = doc.getElementsByTagName("Signature");
 				assertTrue(signature.getLength() < 1);
 			}

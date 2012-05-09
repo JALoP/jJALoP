@@ -242,140 +242,144 @@ Java_com_etsy_net_UnixDomainSocket_nativeUnlink(JNIEnv * jEnv,
     return ret;
 }
 
-#define JALP_BREAK_STR "BREAK"
-
 JNIEXPORT jint JNICALL
 Java_com_etsy_net_UnixDomainSocket_nativeSendmsg(JNIEnv * jEnv,
                                jclass jClass,
                                jint jSocketFileHandle,
-                               jbyteArray data,
-                               jbyteArray meta,
-                               jobject connectionHeader)
+                               jobject messageHeader)
 {
 
-	jclass connCls = (*jEnv)->GetObjectClass(jEnv, connectionHeader);
+	jclass msghCls = (*jEnv)->GetObjectClass(jEnv, messageHeader);
 
-	//Get the message type from the connection header
-	jmethodID mGetMessageType = (*jEnv)->GetMethodID(jEnv, connCls, "getMessageType", "()I");
-	uint16_t messageType = (*jEnv)->CallIntMethod(jEnv, connectionHeader, mGetMessageType);
+	// Get the iov from the message header
+	jmethodID mGetIov = (*jEnv)->GetMethodID(jEnv, msghCls, "getIov", "()[Ljava/lang/Object;");
+	jobjectArray iovArray = (jobjectArray)(*jEnv)->CallObjectMethod(jEnv, messageHeader, mGetIov);
 
-	//Get the protocol version from the connection header
-	jmethodID mGetProtocolVersion = (*jEnv)->GetMethodID(jEnv, connCls, "getProtocolVersion", "()I");
-	uint16_t protocolVersion = (*jEnv)->CallIntMethod(jEnv, connectionHeader, mGetProtocolVersion);
+	// Get the iovLen from the iovArray
+	int iovLen = (*jEnv)->GetArrayLength(jEnv, iovArray);
 
-	//Get the dataLen from the connection header
-	jmethodID mGetDataLen = (*jEnv)->GetMethodID(jEnv, connCls, "getDataLen", "()I");
-	uint64_t dataLen = (*jEnv)->CallIntMethod(jEnv, connectionHeader, mGetDataLen);
-
-	//Get the metaLen from the connection header
-	jmethodID mGetMetaLen = (*jEnv)->GetMethodID(jEnv, connCls, "getMetaLen", "()I");
-	uint64_t metaLen = (*jEnv)->CallIntMethod(jEnv, connectionHeader, mGetMetaLen);
-
-	//Create pointers for the 2 byte arrays, data and meta
-	uint8_t *dataPtr = NULL;
-	if(data != NULL) {
-		dataPtr = (*jEnv)->GetByteArrayElements(jEnv, data, NULL);
-	}
-
-	char *metaPtr = NULL;
-	if(meta != NULL) {
-		metaPtr = (*jEnv)->GetByteArrayElements(jEnv, meta, NULL);
-	}
-
-	//Create the msghdr struct and fill iov
+	// Create the msghdr struct and fill iov
 	struct msghdr msgh;
 	memset(&msgh, 0, sizeof(msgh));
-	int iovlen = 8;
-	if (messageType == 4) {
-		iovlen = 6;
-	}
-	struct iovec iov[iovlen];
-	msgh.msg_iovlen = iovlen;
+	struct iovec iov[iovLen];
+	msgh.msg_iovlen = iovLen;
 	msgh.msg_iov = iov;
 
-	int i = 0;
-	// protocol version
-	iov[i].iov_base = &protocolVersion;
-	iov[i].iov_len = sizeof(protocolVersion);
-	i++;
+	jclass intClass = (*jEnv)->FindClass(jEnv, "java/lang/Integer");
+	jclass shortClass = (*jEnv)->FindClass(jEnv, "java/lang/Short");
+	jclass longClass = (*jEnv)->FindClass(jEnv, "java/lang/Long");
+	jclass byteArrayClass = (*jEnv)->FindClass(jEnv, "[B");
+	jclass stringClass = (*jEnv)->FindClass(jEnv, "java/lang/String");
 
-	// message type
-	iov[i].iov_base = &messageType;
-	iov[i].iov_len = sizeof(messageType);
-	i++;
+	int numShorts = 0;
+	int numInts = 0;
+	int numLongs = 0;
+	int numByteArrays = 0;
+	int numStrings = 0;
 
-	// data length
-	iov[i].iov_base = &dataLen;
-	iov[i].iov_len = sizeof(dataLen);
-	i++;
+	int i;
+	for(i = 0; i < iovLen; i++) {
 
-	// metadata length
-	iov[i].iov_base = &metaLen;
-	iov[i].iov_len = sizeof(metaLen);
-	i++;
+		jobject obj = (*jEnv)->GetObjectArrayElement(jEnv, iovArray, i);
 
-	//If message type is not JALP_JOURNAL_FD_MSG set the data
-	if (messageType != 4) {
-		// log data
-		iov[i].iov_base = (void*) dataPtr;
-		iov[i].iov_len = dataLen;
-		i++;
-
-		// BREAK
-		iov[i].iov_base = JALP_BREAK_STR;
-		iov[i].iov_len = strlen(JALP_BREAK_STR);
-		i++;
-	}
-
-	// metadata
-	iov[i].iov_base = (void*) metaPtr;
-	iov[i].iov_len = metaLen;
-	i++;
-
-	// BREAK
-	iov[i].iov_base = JALP_BREAK_STR;
-	iov[i].iov_len = strlen(JALP_BREAK_STR);
-
-	int flags = 0;
-	ssize_t bytes_sent = 0;
-
-	size_t j = 0;
-	while (j < (size_t)msgh.msg_iovlen) {
-		if (bytes_sent >= (ssize_t)msgh.msg_iov[j].iov_len) {
-			bytes_sent -= msgh.msg_iov[j].iov_len;
-			msgh.msg_iov[j].iov_len = 0;
-			msgh.msg_iov[j].iov_base = NULL;
-			j++;
-		} else {
-			ssize_t offset = msgh.msg_iov[j].iov_len - bytes_sent;
-			msgh.msg_iov[j].iov_base += bytes_sent;
-			msgh.msg_iov[j].iov_len = offset;
-			bytes_sent = sendmsg(jSocketFileHandle, &msgh, flags);
-
-			while (-1 == bytes_sent) {
-				int myerrno;
-				myerrno = errno;
-				if (EINTR == myerrno) {
-					bytes_sent = sendmsg(jSocketFileHandle, &msgh, flags);
-				} else {
-					return -1;
-				}
-			}
-			msgh.msg_control = NULL;
-			msgh.msg_controllen = 0;
+		if((*jEnv)->IsInstanceOf(jEnv, obj, shortClass) == JNI_TRUE) {
+			numShorts++;
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, intClass) == JNI_TRUE) {
+			numInts++;
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, longClass) == JNI_TRUE) {
+			numLongs++;
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, byteArrayClass) == JNI_TRUE) {
+			numByteArrays++;
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, stringClass) == JNI_TRUE) {
+			numStrings++;
 		}
 	}
 
+	uint16_t *shortVals = (uint16_t*) malloc(numShorts * sizeof(uint16_t));
+	uint32_t *intVals = (uint32_t*) malloc(numInts * sizeof(uint32_t));
+	uint64_t *longVals = (uint64_t*) malloc(numLongs * sizeof(uint64_t));
+	uint8_t **byteArrayVals = (uint8_t**) malloc(numByteArrays * sizeof(uint8_t*));
+	const char **stringVals = (const char**) malloc(numStrings * sizeof(const char*));
+	jobject *objs = (jobject*) malloc(numByteArrays * sizeof(jobject*));
+
+	int shortCounter = 0;
+	int intCounter = 0;
+	int longCounter = 0;
+	int byteArraysCounter = 0;
+	int stringCounter = 0;
+
+	for(i = 0; i < iovLen; i++) {
+
+		jobject obj = (*jEnv)->GetObjectArrayElement(jEnv, iovArray, i);
+
+		if((*jEnv)->IsInstanceOf(jEnv, obj, shortClass) == JNI_TRUE) {
+			jmethodID shortValueMID = (*jEnv)->GetMethodID(jEnv, shortClass, "shortValue", "()S");
+			shortVals[shortCounter] = (uint16_t)(*jEnv)->CallShortMethod(jEnv, obj, shortValueMID);
+
+			iov[i].iov_base = &shortVals[shortCounter];
+			iov[i].iov_len = sizeof(shortVals[shortCounter]);
+
+			shortCounter++;
+
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, intClass) == JNI_TRUE) {
+			jmethodID intValueMID = (*jEnv)->GetMethodID(jEnv, intClass, "intValue", "()I");
+			intVals[intCounter] = (uint32_t)(*jEnv)->CallIntMethod(jEnv, obj, intValueMID);
+
+			iov[i].iov_base = &intVals[intCounter];
+			iov[i].iov_len = sizeof(intVals[intCounter]);
+
+			intCounter++;
+
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, longClass) == JNI_TRUE) {
+			jmethodID longValueMID = (*jEnv)->GetMethodID(jEnv, longClass, "longValue", "()J");
+			longVals[longCounter] = (uint64_t)(*jEnv)->CallLongMethod(jEnv, obj, longValueMID);
+
+			iov[i].iov_base = &longVals[longCounter];
+			iov[i].iov_len = sizeof(longVals[longCounter]);
+
+			longCounter++;
+
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, byteArrayClass) == JNI_TRUE) {
+
+			objs[byteArraysCounter] = obj;
+			byteArrayVals[byteArraysCounter] = (*jEnv)->GetByteArrayElements(jEnv, obj, NULL);
+			int arrayLen = (*jEnv)->GetArrayLength(jEnv, obj);
+
+			iov[i].iov_base = (void*)byteArrayVals[byteArraysCounter];
+			iov[i].iov_len = arrayLen;
+
+			byteArraysCounter++;
+
+		} else if((*jEnv)->IsInstanceOf(jEnv, obj, stringClass) == JNI_TRUE) {
+
+			stringVals[stringCounter] = (*jEnv)->GetStringUTFChars(jEnv, obj, NULL);
+
+			iov[i].iov_base = (char*)stringVals[stringCounter];
+			iov[i].iov_len = strlen(stringVals[stringCounter]);
+
+			stringCounter++;
+
+		} else {
+			// Return -1 because the class type sent isn't handled
+			return -1;
+		}
+	}
+
+	int flags = 0;
+	ssize_t bytes_sent = sendmsg(jSocketFileHandle, &msgh, flags);
+
 	ASSERTNOERR(bytes_sent == -1, "nativeSendmsg: sendmsg");
 
-	//If pointers for data and meta exist release them
-	if(dataPtr != NULL) {
-		(*jEnv)->ReleaseByteArrayElements(jEnv, data, dataPtr, JNI_ABORT);
+	for(i = 0; i < numByteArrays; i++) {
+		(*jEnv)->ReleaseByteArrayElements(jEnv,  objs[i], byteArrayVals[i], JNI_ABORT);
 	}
 
-	if(metaPtr != NULL) {
-		(*jEnv)->ReleaseByteArrayElements(jEnv, meta, metaPtr, JNI_ABORT);
-	}
+	free(shortVals);
+	free(intVals);
+	free(longVals);
+	free(byteArrayVals);
+	free(stringVals);
+	free(objs);
 
 	// return bytes_sent, will be -1 if there was an error
 	return bytes_sent;

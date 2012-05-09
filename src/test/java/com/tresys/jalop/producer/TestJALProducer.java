@@ -16,7 +16,7 @@ import mockit.MockUp;
 
 import org.junit.Test;
 
-import com.etsy.net.ConnectionHeader.MessageType;
+import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;

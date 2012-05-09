@@ -24,25 +24,25 @@
  * limitations under the License.
  */
 
-package com.etsy.net;
+package com.tresys.jalop.common;
 
 public class ConnectionHeader {
 
-	int protocolVersion;
-	int messageType;
-	int dataLen;
-	int metaLen;
+	short protocolVersion;
+	short messageType;
+	long dataLen;
+	long metaLen;
 
 	/**
 	 * Constructor
 	 *
-	 * @param protocolVersion	an int which is the protocol version
+	 * @param protocolVersion	a short which is the protocol version
 	 * @param messageType		the MessageType
-	 * @param dataLen			an int which is the length of the data to be sent
-	 * @param metaLen			an int which is the length of the application metadata to be sent
+	 * @param dataLen			a long which is the length of the data to be sent
+	 * @param metaLen			a long which is the length of the application metadata to be sent
 	 */
-	public ConnectionHeader(int protocolVersion, MessageType messageType,
-			int dataLen, int metaLen) {
+	public ConnectionHeader(short protocolVersion, MessageType messageType,
+			long dataLen, long metaLen) {
 		this.protocolVersion = protocolVersion;
 		this.messageType = messageType.type();
 		this.dataLen = dataLen;
@@ -54,16 +54,16 @@ public class ConnectionHeader {
 	 *
 	 * @return	the protocolVersion property
 	 */
-	public int getProtocolVersion() {
+	public short getProtocolVersion() {
 		return protocolVersion;
 	}
 
 	/**
 	 * Sets the protocolVersion
 	 *
-	 * @param protocolVersion	the int to set
+	 * @param protocolVersion	the short to set
 	 */
-	public void setProtocolVersion(int protocolVersion) {
+	public void setProtocolVersion(short protocolVersion) {
 		this.protocolVersion = protocolVersion;
 	}
 
@@ -72,7 +72,7 @@ public class ConnectionHeader {
 	 *
 	 * @return	the messageType property
 	 */
-	public int getMessageType() {
+	public short getMessageType() {
 		return messageType;
 	}
 
@@ -90,16 +90,16 @@ public class ConnectionHeader {
 	 *
 	 * @return	the dataLen property
 	 */
-	public int getDataLen() {
+	public long getDataLen() {
 		return dataLen;
 	}
 
 	/**
 	 * Sets the dataLen
 	 *
-	 * @param dataLen	the int to set
+	 * @param dataLen	the long to set
 	 */
-	public void setDataLen(int dataLen) {
+	public void setDataLen(long dataLen) {
 		this.dataLen = dataLen;
 	}
 
@@ -108,16 +108,16 @@ public class ConnectionHeader {
 	 *
 	 * @return	the metaLen property
 	 */
-	public int getMetaLen() {
+	public long getMetaLen() {
 		return metaLen;
 	}
 
 	/**
 	 * Sets the metaLen
 	 *
-	 * @param metaLen	the int to set
+	 * @param metaLen	the long to set
 	 */
-	public void setMetaLen(int metaLen) {
+	public void setMetaLen(long metaLen) {
 		this.metaLen = metaLen;
 	}
 
@@ -125,18 +125,18 @@ public class ConnectionHeader {
 	 * An enum for the different message types
 	 */
 	public enum MessageType {
-		JALP_LOG_MSG	(1),
-		JALP_AUDIT_MSG	(2),
-		JALP_JOURNAL_MSG	(3),
-		JALP_JOURNAL_FD_MSG	(4);
+		JALP_LOG_MSG	((short)1),
+		JALP_AUDIT_MSG	((short)2),
+		JALP_JOURNAL_MSG	((short)3),
+		JALP_JOURNAL_FD_MSG	((short)4);
 
-		private int type;
+		private short type;
 
-		MessageType(int type) {
+		MessageType(short type) {
 			this.type = type;
 		}
 
-		private int type() { return type; }
+		private short type() { return type; }
 	}
 
 }

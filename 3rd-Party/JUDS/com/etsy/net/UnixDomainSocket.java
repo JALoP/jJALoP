@@ -182,7 +182,7 @@ public abstract class UnixDomainSocket {
     protected native static int nativeUnlink(String socketFile);
 
     protected native static int nativeSendmsg(int nativeSocketFileHandle,
-            byte[] data, byte[] meta, ConnectionHeader connectionHeader);
+            MessageHeader messageHeader);
 
     protected UnixDomainSocket()
     {
@@ -358,25 +358,19 @@ public abstract class UnixDomainSocket {
         }
 
         /**
-         * Checks that connection header is not null and that either data, meta, or both exist
-         * 	then calls nativeSendmsg
+         * Checks that message header is not null and then calls nativeSendmsg
          *
-         * @param data				the buffer string as a byte[]
-         * @param meta				the application metadata as a byte[]
-         * @param connectionHeader	a ConnectionHeader object which should contain: the protocol version,
-         * 							 type of message, length of meta, and length of data
-         * @throws IOException
+         * @param messageHeader		a MessageHeader object which should contain an iov object array and length
+         * @throws IOException, NullPointerException
          */
-        public void sendmsg(byte data[], byte meta[],
-				ConnectionHeader connectionHeader	) throws IOException {
-            if (connectionHeader == null) {
-                throw new NullPointerException("Connection Header must not be null.");
+        public void sendmsg(MessageHeader messageHeader) throws IOException, NullPointerException {
+            if (messageHeader == null) {
+                throw new NullPointerException("Message Header must not be null.");
             }
-            if (data == null && meta == null) {
-                throw new NullPointerException("meta and data cannot both be null");
-            }
-            if (nativeSendmsg(nativeSocketFileHandle, data, meta, connectionHeader) == -1)
+            int bytesSent = nativeSendmsg(nativeSocketFileHandle, messageHeader);
+            if (bytesSent == -1) {
                 throw new IOException("Unable to write to Unix domain socket");
+            }
         }
 
         // Closes the socket output stream
