@@ -27,6 +27,7 @@
 
 package com.tresys.jalop.producer;
 
+import java.io.File;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -245,54 +246,83 @@ public class JALProducer {
 	/**
 	 * Sets the messageType to JALP_LOG_MSG and calls processSend in JALUtils
 	 *
-	 * @param input		optional, a String which is either a buffer or a path to a file
-	 * @param isPath	optional, a Boolean, true if the input is a path to a file,
-	 * 					false if the input is a buffer
+	 * @param buffer		optional,a String which is a buffer
 	 * @throws Exception
 	 */
-	public void jalpLog(String input, Boolean isPath) throws Exception {
-		if(isPath == null && input != null && !"".equals(input)) {
-			throw new JALException("Boolean isPath is required if a buffer is provided.");
-		}
+	public void jalpLog(String buffer) throws Exception {
 		this.messageType = MessageType.JALP_LOG_MSG;
-		JALUtils.processSend(this, input, isPath);
+		JALUtils.processSend(this, buffer);
+	}
+
+	/**
+	 * Sets the messageType to JALP_LOG_MSG and calls processSend in JALUtils
+	 *
+	 * @param file		optional, a File which contains the buffer
+	 * @throws Exception
+	 */
+	public void jalpLog(File file) throws Exception {
+		this.messageType = MessageType.JALP_LOG_MSG;
+		JALUtils.processSend(this, file);
 	}
 
 	/**
 	 * Sets the messageType to JALP_AUDIT_MSG and calls processSend in JALUtils
 	 *
-	 * @param input		required, a String which is either a buffer or a path to a file
-	 * @param isPath	required, a Boolean, true if the input is a path to a file,
-	 * 					false if the input is a buffer
+	 * @param buffer		required, a String which is a buffer
 	 * @throws Exception
 	 */
-	public void jalpAudit(String input, Boolean isPath) throws Exception {
-		if(input == null || "".equals(input)) {
+	public void jalpAudit(String buffer) throws Exception {
+		if(buffer == null || "".equals(buffer)) {
 			throw new JALException("String buffer is required");
-		} else if(isPath == null) {
-			throw new JALException("Boolean isPath is required");
 		}
 
 		this.messageType = MessageType.JALP_AUDIT_MSG;
-		JALUtils.processSend(this, input, isPath);
+		JALUtils.processSend(this, buffer);
+	}
+
+	/**
+	 * Sets the messageType to JALP_AUDIT_MSG and calls processSend in JALUtils
+	 *
+	 * @param file		required, a File which contains the buffer
+	 * @throws Exception
+	 */
+	public void jalpAudit(File file) throws Exception {
+		if(file == null) {
+			throw new JALException("File is required");
+		}
+
+		this.messageType = MessageType.JALP_AUDIT_MSG;
+		JALUtils.processSend(this, file);
 	}
 
 	/**
 	 * Sets the messageType to JALP_JOURNAL_MSG and calls processSend in JALUtils
 	 *
-	 * @param input		required, a String which is either a buffer or a path to a file
-	 * @param isPath	required, a Boolean, true if the input is a path to a file,
-	 * 					false if the input is a buffer
+	 * @param buffer		required, a String which is a buffer
 	 * @throws Exception
 	 */
-	public void jalpJournal(String input, Boolean isPath) throws Exception {
-		if(input == null || "".equals(input)) {
+	public void jalpJournal(String buffer) throws Exception {
+		if(buffer == null || "".equals(buffer)) {
 			throw new JALException("String input is required");
-		} else if(isPath == null) {
-			throw new JALException("Boolean isPath is required");
 		}
+
 		this.messageType = MessageType.JALP_JOURNAL_MSG;
-		JALUtils.processSend(this, input, isPath);
+		JALUtils.processSend(this, buffer);
+	}
+
+	/**
+	 * Sets the messageType to JALP_JOURNAL_MSG and calls processSend in JALUtils
+	 *
+	 * @param file		required, a File which contains the buffer
+	 * @throws Exception
+	 */
+	public void jalpJournal(File file) throws Exception {
+		if(file == null) {
+			throw new JALException("File is required");
+		}
+
+		this.messageType = MessageType.JALP_JOURNAL_MSG;
+		JALUtils.processSend(this, file);
 	}
 
 }

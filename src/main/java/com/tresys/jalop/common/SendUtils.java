@@ -73,6 +73,7 @@ public class SendUtils {
 
 			byte[] bufferBytes = new byte[BUFFER_SIZE];
 			int read;
+
 			while((read = is.read(bufferBytes, 0, bufferBytes.length)) > 0) {
 				MessageHeader dataHeader = createDataHeader(bufferBytes, read);
 				out.sendmsg(dataHeader);

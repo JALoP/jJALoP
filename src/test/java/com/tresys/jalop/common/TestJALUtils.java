@@ -30,6 +30,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -202,10 +204,10 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, InputStream.class, MessageType.class);
 
 		method.setAccessible(true);
-		method.invoke(utils, doc, DMType.SHA256, "buffer", false, MessageType.JALP_LOG_MSG);
+		method.invoke(utils, doc, DMType.SHA256, new ByteArrayInputStream("String buffer".getBytes()), MessageType.JALP_LOG_MSG);
 
 		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
 		assertNotNull(manifest);
@@ -235,10 +237,10 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, InputStream.class, MessageType.class);
 
 		method.setAccessible(true);
-		method.invoke(utils, doc, DMType.SHA256, "buffer", false, MessageType.JALP_AUDIT_MSG);
+		method.invoke(utils, doc, DMType.SHA256, new ByteArrayInputStream("String buffer".getBytes()), MessageType.JALP_AUDIT_MSG);
 
 		Element manifest = (Element)doc.getElementsByTagName("Manifest").item(0);
 		assertNotNull(manifest);
@@ -252,11 +254,11 @@ public class TestJALUtils {
 	@Test(expected = JALException.class)
 	public void testManifestWithNullDMTypeThrowsException() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, InputStream.class, MessageType.class);
 		method.setAccessible(true);
 
 		try{
-			method.invoke(utils, doc, null, "buffer", false, MessageType.JALP_LOG_MSG);
+			method.invoke(utils, doc, null, new ByteArrayInputStream("String buffer".getBytes()), MessageType.JALP_LOG_MSG);
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
 		}
@@ -265,11 +267,11 @@ public class TestJALUtils {
 	@Test(expected = JALException.class)
 	public void testManifestWithNullMessageTypeThrowsException() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, String.class, Boolean.class, MessageType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createManifest", Document.class, DMType.class, InputStream.class, MessageType.class);
 		method.setAccessible(true);
 
 		try{
-			method.invoke(utils, doc, DMType.SHA256, "buffer", false, null);
+			method.invoke(utils, doc, DMType.SHA256, new ByteArrayInputStream("String buffer".getBytes()), null);
 		} catch(InvocationTargetException ite) {
 			throw (Exception)ite.getCause();
 		}
@@ -278,11 +280,11 @@ public class TestJALUtils {
 	@Test
 	public void testDigestWorks() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createDigest", InputStream.class, DMType.class);
 		method.setAccessible(true);
 
 		try{
-			byte[] buffer = (byte[]) method.invoke(utils, "buffer", false, DMType.SHA256);
+			byte[] buffer = (byte[]) method.invoke(utils, new ByteArrayInputStream("buffer".getBytes()), DMType.SHA256);
 
 			StringBuffer sb = new StringBuffer();
 			for(byte b : buffer) {
@@ -296,33 +298,14 @@ public class TestJALUtils {
 	}
 
 	@Test
-	public void testDigestWorksWithPath() throws Exception {
-
-		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
-		method.setAccessible(true);
-
-		try{
-			byte[] buffer = (byte[]) method.invoke(utils, "test-input/testBuffer", true, DMType.SHA256);
-
-			StringBuffer sb = new StringBuffer();
-			for(byte b : buffer) {
-				sb.append(String.format("%02x", b));
-			}
-			assertEquals("5126792129f6e60ecb250b7f77beb0156854e92e20c7517362d6786e77c21110", sb.toString());
-
-		} catch(InvocationTargetException ite) {
-			throw (Exception)ite.getCause();
-		}
-	}
-
-	@Test
 	public void testDigestWorksWithEvenSizedBuffer() throws Exception {
 
-		Method method = JALUtils.class.getDeclaredMethod("createDigest", String.class, Boolean.class, DMType.class);
+		Method method = JALUtils.class.getDeclaredMethod("createDigest", InputStream.class, DMType.class);
 		method.setAccessible(true);
 
 		try{
-			byte[] buffer = (byte[]) method.invoke(utils, "test-input/evenBuffer", true, DMType.SHA256);
+			File file = new File("test-input/evenBuffer");
+			byte[] buffer = (byte[]) method.invoke(utils, new FileInputStream(file), DMType.SHA256);
 
 			StringBuffer sb = new StringBuffer();
 			for(byte b : buffer) {
@@ -623,9 +606,9 @@ public class TestJALUtils {
 		};
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, null, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, 0, MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
@@ -648,9 +631,9 @@ public class TestJALUtils {
 		};
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", (String)"buffer", false, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"/path/to/file", new ByteArrayInputStream("String buffer".getBytes()), "String buffer".length(), MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
@@ -668,9 +651,9 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class,InputStream.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, null, (String)"buffer", false, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, null, new ByteArrayInputStream("String buffer".getBytes()), "String buffer".length(), MessageType.JALP_LOG_MSG});
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
@@ -688,16 +671,35 @@ public class TestJALUtils {
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 		
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, String.class, Boolean.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"", (String)"buffer", false, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, (String)"",new ByteArrayInputStream("String buffer".getBytes()), "String buffer".length(), MessageType.JALP_LOG_MSG});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
+	}
+
+	@Test(expected = JALException.class)
+	public void testSendThrowsJALExceptionWhenDocAndIsAreNull() throws Exception {
+		LoggerType logger = new LoggerType();
+		LoggerXML xml = new LoggerXML(logger);
+		xml.prepareSend("hostname", "app_name");
+
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class,InputStream.class, long.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{null, (String)"/path/to/file", null, 0, MessageType.JALP_LOG_MSG});
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
 	}
 
 	@Test
-	public void testProcessSendWorks() throws Exception {
+	public void testProcessXMLWorks() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
@@ -707,16 +709,18 @@ public class TestJALUtils {
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
-		new MockUp<JALUtils>() {
-			@Mock
-			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {}
-		};
-
-		utils.processSend(prod, "String buffer", false);
+		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{prod, is});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 
 	@Test
-	public void testProcessSendCallsCreateManifest() throws Exception {
+	public void testProcessXMLCallsCreateManifest() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
@@ -726,22 +730,23 @@ public class TestJALUtils {
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
-		new MockUp<JALUtils>() {
-			@Mock
-			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
-				NodeList manifestList = doc.getElementsByTagName("Manifest");
-				assertTrue(manifestList.getLength() > 0);
-				Node manifest = manifestList.item(0);
-				Node signature = doc.getElementsByTagName("Signature").item(0);
-				assertEquals(signature.getNextSibling(), manifest);
-			}
-		};
-
-		utils.processSend(prod, "String buffer", false);
+		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			Document doc = (Document) method.invoke(null, new Object[]{prod, is});
+			NodeList manifestList = doc.getElementsByTagName("Manifest");
+			assertTrue(manifestList.getLength() > 0);
+			Node manifest = manifestList.item(0);
+			Node signature = doc.getElementsByTagName("Signature").item(0);
+			assertEquals(signature.getNextSibling(), manifest);
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 
 	@Test
-	public void testProcessSendDoesntCallCreateManifest() throws Exception {
+	public void testProcessXMLDoesntCallCreateManifest() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
@@ -751,19 +756,20 @@ public class TestJALUtils {
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
-		new MockUp<JALUtils>() {
-			@Mock
-			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
-				NodeList manifest = doc.getElementsByTagName("Manifest");
-				assertTrue(manifest.getLength() < 1);
-			}
-		};
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
+			NodeList manifest = doc.getElementsByTagName("Manifest");
+			assertTrue(manifest.getLength() < 1);
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 
-		utils.processSend(prod, "", false);
 	}
 
 	@Test
-	public void testProcessSendCallsSign() throws Exception {
+	public void testProcessXMLCallsSign() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
@@ -773,19 +779,19 @@ public class TestJALUtils {
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
-		new MockUp<JALUtils>() {
-			@Mock
-			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
-				NodeList signature = doc.getElementsByTagName("Signature");
-				assertTrue(signature.getLength() > 0);
-			}
-		};
-
-		utils.processSend(prod, "String buffer", false);
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
+			NodeList signature = doc.getElementsByTagName("Signature");
+			assertTrue(signature.getLength() > 0);
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 
 	@Test
-	public void testProcessSendDoesntCallSign() throws Exception {
+	public void testProcessXMLDoesntCallSign() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
@@ -793,26 +799,37 @@ public class TestJALUtils {
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
-		new MockUp<JALUtils>() {
-			@Mock
-			void send(Document doc, String socketFile, String buffer, Boolean isPath, MessageType messageType) throws Exception {
-				NodeList signature = doc.getElementsByTagName("Signature");
-				assertTrue(signature.getLength() < 1);
-			}
-		};
-
-		utils.processSend(prod, "String buffer", false);
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
+			NodeList signature = doc.getElementsByTagName("Signature");
+			assertTrue(signature.getLength() < 1);
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 
 	@Test(expected = JALException.class)
-	public void testProcessSendThrowsExceptionWithNullProducer() throws Exception {
-		utils.processSend(null, null, false);
+	public void testProcessXMLThrowsExceptionWithNullProducer() throws Exception {
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{null, null});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 
 	@Test(expected = JALException.class)
-	public void testProcessSendThrowsExceptionWithNullXML() throws Exception {
+	public void testProcessXMLThrowsExceptionWithNullXML() throws Exception {
 		JALProducer prod = new JALProducer(null, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
-
-		utils.processSend(prod, "String buffer", false);
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{prod, null});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
 	}
 }

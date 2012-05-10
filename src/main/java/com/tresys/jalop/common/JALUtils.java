@@ -83,20 +83,49 @@ import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
 
 public class JALUtils {
-	
+
 	public static final String SCHEMA_LOCATION = "/com/tresys/jalop/applicationMetadataTypes.xsd";
 
 	/**
-	 * Starts the send process. Calls methods to set fields,
-	 * sign the document and create the manifest if applicable then continues with send.
+	 * Starts the send process. Creates InputStreams and calls methods to create the document and send.
 	 *
 	 * @param producer	the JALProducer
-	 * @param buffer	a String which is either a buffer or a path to a file
-	 * @param isPath	a Boolean, true if the input is a path to a file,
-	 * 						false if the input is a buffer
+	 * @param file		a File which contains the buffer
 	 * @throws Exception
 	 */
-	public static void processSend(JALProducer producer, String buffer, Boolean isPath) throws Exception {
+	public static void processSend(JALProducer producer, File file) throws Exception {
+
+		InputStream digestStream =  new FileInputStream(file);
+		Document doc = processXML(producer, digestStream);
+
+		InputStream sendStream = new FileInputStream(file);
+		send(doc, producer.getSocketFile(), sendStream, file.length(), producer.getMessageType());
+	}
+
+	/**
+	 * Starts the send process. Creates InputStreams and calls methods to create the document and send.
+	 *
+	 * @param producer	the JALProducer
+	 * @param buffer	a String which is the buffer
+	 * @throws Exception
+	 */
+	public static void processSend(JALProducer producer, String buffer) throws Exception {
+
+		InputStream digestStream = new ByteArrayInputStream(buffer.getBytes());
+		Document doc = processXML(producer, digestStream);
+
+		InputStream sendStream = new ByteArrayInputStream(buffer.getBytes());
+		send(doc, producer.getSocketFile(), sendStream,  buffer.length(), producer.getMessageType());
+	}
+
+	/**
+	 * Creates a Document, signs and creates the manifest if applicable.
+	 *
+	 * @param producer		the JALProducer
+	 * @param digestStream	an InputStream for the buffer
+	 * @throws Exception
+	 */
+	private static Document processXML(JALProducer producer, InputStream digestStream) throws Exception {
 
 		if(producer == null) {
 			throw new JALException("The JALProducer must not be null.");
@@ -111,21 +140,21 @@ public class JALUtils {
 
 		Document doc = xml.marshal();
 
-		if(producer.getDigestMethod() != null && buffer != null && !"".equals(buffer)) {
-			createManifest(doc, producer.getDigestMethod(), buffer, isPath, producer.getMessageType());
+		if(producer.getDigestMethod() != null && digestStream != null) {
+			createManifest(doc, producer.getDigestMethod(), digestStream, producer.getMessageType());
 		}
 
 		if(producer.getPrivateKey() != null && producer.getPublicKey() != null) {
 			sign(doc, producer);
 		}
 
-		if(producer.getDigestMethod() != null && buffer != null && !"".equals(buffer)) {
+		if(producer.getDigestMethod() != null && digestStream != null) {
 			//Move the manifest to the end of the document
 			Node manifest = doc.getElementsByTagName("Manifest").item(0);
 			doc.getDocumentElement().appendChild(manifest);
 		}
 
-		send(doc, producer.getSocketFile(), buffer, isPath, producer.getMessageType());
+		return doc;
 	}
 
 	/**
@@ -257,13 +286,11 @@ public class JALUtils {
 	 *
 	 * @param doc			the signed Document
 	 * @param dmType		the DMType which will determine the digest method used
-	 * @param input			a String which is either a buffer or a path to a file
-	 * @param isPath		a Boolean, true if the input is a path to a file,
-	 * 							false if the input is a buffer
+	 * @param is			an InputStream for the buffer
 	 * @param messageType	the MessageType
 	 * @throws Exception
 	 */
-	private static void createManifest(Document doc, DMType dmType, String input, Boolean isPath, MessageType messageType) throws Exception {
+	private static void createManifest(Document doc, DMType dmType, InputStream is, MessageType messageType) throws Exception {
 
 		if(dmType == null || messageType == null) {
 			throw new JALException("DMType and MessageType must be set in the JALProducer first.");
@@ -278,7 +305,7 @@ public class JALUtils {
 		digestMethod.setAlgorithm(dmType.digestMethod());
 
 		ref.setDigestMethod(digestMethod);
-		ref.setDigestValue(createDigest(input, isPath, dmType));
+		ref.setDigestValue(createDigest(is, dmType));
 
 		if(MessageType.JALP_AUDIT_MSG.equals(messageType)) {
 			TransformType transform = new TransformType();
@@ -302,45 +329,36 @@ public class JALUtils {
 	 * in chunks, adding each chunk to the MessageDigest. When the file has been read completely
 	 * it is digested.
 	 *
-	 * @param input		a String which is either a buffer or a path to a file
-	 * @param isPath	a Boolean, true if the input is a path to a file,
-	 * 						false if the input is a buffer
+	 * @param is			an InputStream for the buffer
 	 * @param dmType	the DMType which will determine the digest method used
 	 * @return
 	 * @throws Exception
 	 */
-	private static byte[] createDigest(String input, Boolean isPath, DMType dmType) throws Exception {
+	private static byte[] createDigest(InputStream is, DMType dmType) throws Exception {
 
 		MessageDigest md = MessageDigest.getInstance(dmType.digestType());
-		if(Boolean.TRUE.equals(isPath)) {
 
-			FileInputStream f = new FileInputStream(input);
-			byte[] buffer = new byte[SendUtils.BUFFER_SIZE];
-			int read;
-			while((read = f.read(buffer, 0, buffer.length)) > 0) {
-				md.update(buffer, 0, read);
-			}
-		} else {
-			md.update(input.getBytes());
+		byte[] buffer = new byte[SendUtils.BUFFER_SIZE];
+		int read;
+		while((read = is.read(buffer, 0, buffer.length)) > 0) {
+			md.update(buffer, 0, read);
 		}
 
 		return md.digest();
 	}
 
 	/**
-	 * Changes input to an inputstream and doc to a String to prepare for sending
+	 * Changes doc to a String and continues with sending
 	 * and then calls createAndSendHeaders
 	 *
 	 * @param doc			the marshaled xml doc
 	 * @param socketFile	the socket file
-	 * @param input			a String which is the buffer to send
-	 * @param isPath		a Boolean, true if the input is a path to a file,
-	 * 							false if the input is a buffer
+	 * @param is			an InputStream for the buffer
 	 * @param messageType	the type of message to send
 	 * @throws Exception
 	 */
-	private static void send(Document doc, String socketFile, String input, Boolean isPath, MessageType messageType) throws Exception {
-		if(doc == null && (input == null || "".equals(input))) {
+	private static void send(Document doc, String socketFile, InputStream is, long bufferLength, MessageType messageType) throws Exception {
+		if(doc == null && is == null) {
 			throw new JALException("Error in JALUtils.send - doc and buffer cannot both be null");
 		}
 		if(socketFile != null && !"".equals(socketFile)) {
@@ -356,21 +374,6 @@ public class JALUtils {
 			if(appMeta != null) {
 				appMetaBytes = appMeta.getBytes();
 				appMetaLength = appMetaBytes.length;
-			}
-
-			long bufferLength = 0;
-			InputStream is = null;
-
-			if(input != null) {
-				if(isPath) {
-					File file = new File(input);
-					bufferLength = file.length();
-					is = new FileInputStream(input);
-
-				} else {
-					is = new ByteArrayInputStream(input.getBytes());
-					bufferLength = input.length();
-				}
 			}
 
 			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, appMetaBytes, socketFile);
