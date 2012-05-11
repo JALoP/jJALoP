@@ -53,7 +53,7 @@ import org.apache.commons.cli.PosixParser;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
 import com.tresys.jalop.producer.CustomXML;
-import com.tresys.jalop.producer.JALProducer;
+import com.tresys.jalop.producer.Producer;
 import com.tresys.jalop.producer.LoggerXML;
 import com.tresys.jalop.producer.SyslogXML;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
@@ -125,7 +125,7 @@ public class JALPTest {
 				xml = createXML(readXML(pathToXML));
 			}
 
-			JALProducer producer = createProducer(xml, socketPath, privateKeyPath, publicKeyPath, certPath, hasDigest);
+			Producer producer = createProducer(xml, socketPath, privateKeyPath, publicKeyPath, certPath, hasDigest);
 			callSend(producer, type, input, file);
 
 		} catch (Exception e) {
@@ -170,7 +170,7 @@ public class JALPTest {
 	}
 
 	/**
-	 * Creates a JALProducer using the given command line params.
+	 * Creates a Producer using the given command line params.
 	 *
 	 * @param xml				the ApplicationMetadataXML
 	 * @param socketPath		a String which is the path to the socket
@@ -178,16 +178,16 @@ public class JALPTest {
 	 * @param publicKeyPath		a String which is the path to the public key in DER format
 	 * @param certPath			a String which is the path to the certificate
 	 * @param hasDigest			a Boolean, true to set a digest method in the producer
-	 * @return	the created JALProducer
+	 * @return	the created Producer
 	 * @throws Exception
 	 */
-	private static JALProducer createProducer(ApplicationMetadataXML xml,
+	private static Producer createProducer(ApplicationMetadataXML xml,
 												String socketPath,
 												String privateKeyPath,
 												String publicKeyPath,
 												String certPath,
 												Boolean hasDigest) throws Exception {
-		JALProducer producer  = new JALProducer(xml);
+		Producer producer  = new Producer(xml);
 		producer.setSocketFile(socketPath);
 
 		if(privateKeyPath != null && !"".equals(privateKeyPath)) {
@@ -231,15 +231,15 @@ public class JALPTest {
 	}
 
 	/**
-	 * Calls the right method in JALProducer to sign and send the data based on the type.
+	 * Calls the right method in Producer to sign and send the data based on the type.
 	 *
-	 * @param producer	the JALProducer
+	 * @param producer	the Producer
 	 * @param type		the type input (l, a, j, f)
 	 * @param input		a String that is a buffer
 	 * @param file		a File which contains the buffer
 	 * @throws Exception
 	 */
-	private static void callSend(JALProducer producer, String type, String input, File file) throws Exception {
+	private static void callSend(Producer producer, String type, String input, File file) throws Exception {
 
 		if("l".equals(type)) {
 			if(file != null) {

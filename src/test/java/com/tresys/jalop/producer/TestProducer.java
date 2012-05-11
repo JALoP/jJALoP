@@ -24,25 +24,25 @@ import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 
-public class TestJALProducer {
+public class TestProducer {
 
 	@Test
-	public void testJALProducerDefaultConstructorWorks() {
-		JALProducer prod = new JALProducer();
+	public void testProducerDefaultConstructorWorks() {
+		Producer prod = new Producer();
 		assertNotNull(prod);
 	}
 	
 	@Test
-	public void testJALProducerAppMetadataXMLConstructorWorks() throws Exception {
+	public void testProducerAppMetadataXMLConstructorWorks() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer(xml);
+		Producer prod = new Producer(xml);
 		assertNotNull(prod);
 		assertSame(xml, prod.getXml());
 	}
 
 	@Test
-	public void testJALProducerAppMetaXMLAllParamsConstructorWorks() throws Exception {
+	public void testProducerAppMetaXMLAllParamsConstructorWorks() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
@@ -51,7 +51,7 @@ public class TestJALProducer {
 		InputStream in = new FileInputStream("test-input/cert");
 		X509Certificate cert = (X509Certificate)cf.generateCertificate(in);
 		in.close();
-		JALProducer prod = new JALProducer(xml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), cert, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(xml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), cert, DMType.SHA256, "/path/to/socket");
 		assertNotNull(prod);
 		assertSame(xml, prod.getXml());
 		assertEquals("hostname", prod.getHostName());
@@ -67,21 +67,21 @@ public class TestJALProducer {
 	public void testSetGetXml() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setXml(xml);
 		assertSame(xml, prod.getXml());
 	}
 
 	@Test
 	public void testSetGetHostName() {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setHostName("hostname");
 		assertEquals("hostname", prod.getHostName());
 	}
 
 	@Test
 	public void testSetGetApplicationName() {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setApplicationName("app_name");
 		assertEquals("app_name", prod.getApplicationName());
 	}
@@ -90,7 +90,7 @@ public class TestJALProducer {
 	public void testSetGetPrivateKeyAndPublicKey() throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setPrivateKey(kp.getPrivate());
 		prod.setPublicKey(kp.getPublic());
 		assertSame(kp.getPrivate(), prod.getPrivateKey());
@@ -103,21 +103,21 @@ public class TestJALProducer {
 		InputStream in = new FileInputStream("test-input/cert");
 		X509Certificate cert = (X509Certificate)cf.generateCertificate(in);
 		in.close();
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setCertificate(cert);
 		assertSame(cert, prod.getCertificate());
 	}
 
 	@Test
 	public void testSetGetDigestMethod() {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setDigestMethod(DMType.SHA256);
 		assertSame(DMType.SHA256, prod.getDigestMethod());
 	}
 
 	@Test
 	public void testSetGetSocketFile() {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.setSocketFile("/path/to/socket");
 		assertEquals("/path/to/socket", prod.getSocketFile());
 	}
@@ -127,10 +127,10 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, String buffer) throws Exception {}
+			void processSend(Producer producer, String buffer) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpLog("buffer");
 		assertEquals(prod.getMessageType(), MessageType.JALP_LOG_MSG);
 	}
@@ -140,10 +140,10 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, File file) throws Exception {}
+			void processSend(Producer producer, File file) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpLog(new File("test-input/testBuffer"));
 		assertEquals(prod.getMessageType(), MessageType.JALP_LOG_MSG);
 	}
@@ -152,12 +152,12 @@ public class TestJALProducer {
 	public void testJalpLogWorksWithBlankBuffer() throws Exception {
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, String buffer) throws Exception {
+			void processSend(Producer producer, String buffer) throws Exception {
 				assertEquals(buffer, "");
 			}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpLog("");
 	}
 
@@ -165,12 +165,12 @@ public class TestJALProducer {
 	public void testJalpLogWorksWithNullBuffer() throws Exception {
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, String buffer) throws Exception {
+			void processSend(Producer producer, String buffer) throws Exception {
 				assertNull(buffer);
 			}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpLog((String)null);
 	}
 
@@ -178,12 +178,12 @@ public class TestJALProducer {
 	public void testJalpLogWorksWithNullFile() throws Exception {
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, File file) throws Exception {
+			void processSend(Producer producer, File file) throws Exception {
 				assertNull(file);
 			}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpLog((File)null);
 	}
 
@@ -192,10 +192,10 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, String buffer) throws Exception {}
+			void processSend(Producer producer, String buffer) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpAudit("buffer");
 		assertEquals(prod.getMessageType(), MessageType.JALP_AUDIT_MSG);
 	}
@@ -205,29 +205,29 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, File file) throws Exception {}
+			void processSend(Producer producer, File file) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpAudit(new File("test-input/testBuffer"));
 		assertEquals(prod.getMessageType(), MessageType.JALP_AUDIT_MSG);
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpAuditThrowsExceptionWithNullBuffer() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpAudit((String)null);
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpAuditThrowsExceptionWithBlankBuffer() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpAudit("");
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpAuditThrowsExceptionWithNullFile() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpAudit((File)null);
 	}
 
@@ -236,10 +236,10 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, String buffer) throws Exception {}
+			void processSend(Producer producer, String buffer) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpJournal("buffer");
 		assertEquals(prod.getMessageType(), MessageType.JALP_JOURNAL_MSG);
 	}
@@ -249,29 +249,29 @@ public class TestJALProducer {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void processSend(JALProducer producer, File file) throws Exception {}
+			void processSend(Producer producer, File file) throws Exception {}
 		};
 
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpJournal(new File("test-input/testBuffer"));
 		assertEquals(prod.getMessageType(), MessageType.JALP_JOURNAL_MSG);
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpJournalThrowsExceptionWithNullBuffer() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpJournal((String)null);
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpJournalThrowsExceptionWithBlankBuffer() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpJournal("");
 	}
 
 	@Test(expected = JALException.class)
 	public void testJalpJournalThrowsExceptionWithNullFile() throws Exception {
-		JALProducer prod = new JALProducer();
+		Producer prod = new Producer();
 		prod.jalpJournal((File)null);
 	}
 

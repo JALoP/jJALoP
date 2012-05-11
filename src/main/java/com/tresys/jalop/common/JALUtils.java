@@ -74,7 +74,7 @@ import org.w3c.dom.Node;
 
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
-import com.tresys.jalop.producer.JALProducer;
+import com.tresys.jalop.producer.Producer;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.DigestMethodType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ManifestType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ObjectFactory;
@@ -89,11 +89,11 @@ public class JALUtils {
 	/**
 	 * Starts the send process. Creates InputStreams and calls methods to create the document and send.
 	 *
-	 * @param producer	the JALProducer
+	 * @param producer	the Producer
 	 * @param file		a File which contains the buffer
 	 * @throws Exception
 	 */
-	public static void processSend(JALProducer producer, File file) throws Exception {
+	public static void processSend(Producer producer, File file) throws Exception {
 
 		InputStream digestStream =  new FileInputStream(file);
 		Document doc = processXML(producer, digestStream);
@@ -105,11 +105,11 @@ public class JALUtils {
 	/**
 	 * Starts the send process. Creates InputStreams and calls methods to create the document and send.
 	 *
-	 * @param producer	the JALProducer
+	 * @param producer	the Producer
 	 * @param buffer	a String which is the buffer
 	 * @throws Exception
 	 */
-	public static void processSend(JALProducer producer, String buffer) throws Exception {
+	public static void processSend(Producer producer, String buffer) throws Exception {
 
 		InputStream digestStream = null;
 		if(buffer != null) {
@@ -129,21 +129,21 @@ public class JALUtils {
 	/**
 	 * Creates a Document, signs and creates the manifest if applicable.
 	 *
-	 * @param producer		the JALProducer
+	 * @param producer		the Producer
 	 * @param digestStream	an InputStream for the buffer
 	 * @throws Exception
 	 */
-	private static Document processXML(JALProducer producer, InputStream digestStream) throws Exception {
+	private static Document processXML(Producer producer, InputStream digestStream) throws Exception {
 
 		if(producer == null) {
-			throw new JALException("The JALProducer must not be null.");
+			throw new JALException("The Producer must not be null.");
 		}
 
 		Document doc = null;
 		ApplicationMetadataXML xml = producer.getXml();
 
 		if(xml == null && !MessageType.JALP_LOG_MSG.equals(producer.getMessageType())) {
-			throw new JALException("The ApplicationMetadataXML must be set in the JALProducer.");
+			throw new JALException("The ApplicationMetadataXML must be set in the Producer.");
 		}
 
 		if(xml != null) {
@@ -200,10 +200,10 @@ public class JALUtils {
 	 * Adds a signature to the given document
 	 *
 	 * @param doc		the marshaled document to be signed
-	 * @param producer	the JALProducer
+	 * @param producer	the Producer
 	 * @throws Exception
 	 */
-	private static void sign(Document doc, JALProducer producer) throws Exception {
+	private static void sign(Document doc, Producer producer) throws Exception {
 		ApplicationMetadataXML xml = producer.getXml();
 		String jid = xml.getJID();
 
@@ -305,7 +305,7 @@ public class JALUtils {
 	private static void createManifest(Document doc, DMType dmType, InputStream is, MessageType messageType) throws Exception {
 
 		if(dmType == null || messageType == null) {
-			throw new JALException("DMType and MessageType must be set in the JALProducer first.");
+			throw new JALException("DMType and MessageType must be set in the Producer first.");
 		}
 
 		ManifestType manifest = new ManifestType();

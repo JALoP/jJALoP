@@ -1,5 +1,5 @@
 /**
- * JALProducer class stores relevant application data and is the primary class 
+ * Producer class stores relevant application data and is the primary class
  * for the producer library.
  * <p>
  * Source code in 3rd-party is licensed and owned by their respective
@@ -37,7 +37,7 @@ import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 
-public class JALProducer {
+public class Producer {
 	
 	private ApplicationMetadataXML xml;
 	private String hostName;
@@ -52,7 +52,7 @@ public class JALProducer {
 	/**
 	 * Constructor 
 	 */
-	public JALProducer() {
+	public Producer() {
 		
 	}
 	
@@ -61,7 +61,7 @@ public class JALProducer {
 	 * 
 	 * @param xml	the ApplicationMetadataXML
 	 */
-	public JALProducer(ApplicationMetadataXML xml) {
+	public Producer(ApplicationMetadataXML xml) {
 		this.xml = xml;
 	}
 
@@ -77,7 +77,7 @@ public class JALProducer {
 	 * @param digestMethod		the type of digest method to use
 	 * @param socketFile		the socket file for connection info
 	 */
-	public JALProducer(ApplicationMetadataXML xml, String hostName,
+	public Producer(ApplicationMetadataXML xml, String hostName,
 			String applicationName, PrivateKey privateKey, PublicKey publicKey,
 			X509Certificate certificate, DMType digestMethod, String socketFile) {
 		this.xml = xml;

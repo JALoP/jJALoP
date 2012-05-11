@@ -88,7 +88,7 @@ import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
-import com.tresys.jalop.producer.JALProducer;
+import com.tresys.jalop.producer.Producer;
 import com.tresys.jalop.producer.LoggerXML;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
@@ -324,7 +324,7 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 		assertNotNull(prod);
 
 		ApplicationMetadataXML xml = prod.getXml();
@@ -333,7 +333,7 @@ public class TestJALUtils {
 		doc = xml.marshal();
 		assertNotNull(doc);
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		method.invoke(utils, doc, prod);
 
@@ -379,7 +379,7 @@ public class TestJALUtils {
 		InputStream in = new FileInputStream("test-input/cert");
 		X509Certificate cert = (X509Certificate)cf.generateCertificate(in);
 		in.close();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), cert, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), cert, DMType.SHA256, "/path/to/socket");
 		assertNotNull(prod);
 
 		ApplicationMetadataXML xml = prod.getXml();
@@ -388,7 +388,7 @@ public class TestJALUtils {
 		doc = xml.marshal();
 		assertNotNull(doc);
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		method.invoke(utils, doc, prod);
 
@@ -410,14 +410,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
 		ApplicationMetadataXML xml = prod.getXml();
 		assertNotNull(xml);
 		xml.prepareSend("Host Name", "Application Name");
 		doc = xml.marshal();
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		try{
 			method.invoke(utils, doc, prod);
@@ -440,14 +440,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
 		ApplicationMetadataXML xml = prod.getXml();
 		assertNotNull(xml);
 		xml.prepareSend("Host Name", "Application Name");
 		doc = xml.marshal();
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		try{
 			method.invoke(utils, doc, prod);
@@ -484,14 +484,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
 		ApplicationMetadataXML xml = prod.getXml();
 		assertNotNull(xml);
 		xml.prepareSend("Host Name", "Application Name");
 		doc = xml.marshal();
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		try{
 			method.invoke(utils, doc, prod);
@@ -513,14 +513,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
 		ApplicationMetadataXML xml = prod.getXml();
 		assertNotNull(xml);
 		xml.prepareSend("Host Name", "Application Name");
 		doc = xml.marshal();
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		try{
 			method.invoke(utils, doc, prod);
@@ -542,14 +542,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
 		ApplicationMetadataXML xml = prod.getXml();
 		assertNotNull(xml);
 		xml.prepareSend("Host Name", "Application Name");
 		doc = xml.marshal();
 
-		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, JALProducer.class);
+		Method method = JALUtils.class.getDeclaredMethod("sign", Document.class, Producer.class);
 		method.setAccessible(true);
 		try{
 			method.invoke(utils, doc, prod);
@@ -724,15 +724,15 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			method.invoke(null, new Object[]{prod, is});
 		} catch (InvocationTargetException e) {
@@ -744,15 +744,15 @@ public class TestJALUtils {
 	public void testProcessXMLWorksWithNullXML() throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			method.invoke(null, new Object[]{prod, is});
 		} catch (InvocationTargetException e) {
@@ -764,15 +764,15 @@ public class TestJALUtils {
 	public void testProcessXMLFailsWithNullXMLAndNotLog() throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_AUDIT_MSG);
 
 		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			method.invoke(null, new Object[]{prod, is});
 		} catch (InvocationTargetException e) {
@@ -785,15 +785,15 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			Document doc = (Document) method.invoke(null, new Object[]{prod, is});
 			NodeList manifestList = doc.getElementsByTagName("Manifest");
@@ -811,14 +811,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, null, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, null, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
 			NodeList manifest = doc.getElementsByTagName("Manifest");
@@ -834,14 +834,14 @@ public class TestJALUtils {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
 			NodeList signature = doc.getElementsByTagName("Signature");
@@ -854,14 +854,14 @@ public class TestJALUtils {
 	@Test
 	public void testProcessXMLDoesntCallSign() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			Document doc = (Document) method.invoke(null, new Object[]{prod, null});
 			NodeList signature = doc.getElementsByTagName("Signature");
@@ -874,7 +874,7 @@ public class TestJALUtils {
 	@Test(expected = JALException.class)
 	public void testProcessXMLThrowsExceptionWithNullProducer() throws Exception {
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			method.invoke(null, new Object[]{null, null});
 		} catch (InvocationTargetException e) {
@@ -884,9 +884,9 @@ public class TestJALUtils {
 
 	@Test(expected = JALException.class)
 	public void testProcessXMLThrowsExceptionWithNullXML() throws Exception {
-		JALProducer prod = new JALProducer(null, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(null, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{Producer.class, InputStream.class});
 			method.setAccessible(true);
 			method.invoke(null, new Object[]{prod, null});
 		} catch (InvocationTargetException e) {
@@ -897,9 +897,9 @@ public class TestJALUtils {
 	@Test
 	public void testProcessSendWorksWithFile() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
@@ -915,9 +915,9 @@ public class TestJALUtils {
 	@Test
 	public void testProcessSendWorksWithString() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
@@ -932,9 +932,9 @@ public class TestJALUtils {
 	@Test
 	public void testProcessSendWorksWithNullString() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
-		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+		Producer prod = new Producer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
 
-		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		Field messageType = Producer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
 
