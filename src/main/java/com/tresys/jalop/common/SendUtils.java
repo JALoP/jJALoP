@@ -71,14 +71,15 @@ public class SendUtils {
 		// If messageType != 4 (fd) create MessageHeader with data info - send
 		if(MessageType.JALP_JOURNAL_FD_MSG != messageType) {
 
-			byte[] bufferBytes = new byte[BUFFER_SIZE];
-			int read;
+			if(is != null) {
+				byte[] bufferBytes = new byte[BUFFER_SIZE];
+				int read;
 
-			while((read = is.read(bufferBytes, 0, bufferBytes.length)) > 0) {
-				MessageHeader dataHeader = createDataHeader(bufferBytes, read);
-				out.sendmsg(dataHeader);
+				while((read = is.read(bufferBytes, 0, bufferBytes.length)) > 0) {
+					MessageHeader dataHeader = createDataHeader(bufferBytes, read);
+					out.sendmsg(dataHeader);
+				}
 			}
-
 			out.sendmsg(createBreakHeader());
 		}
 
@@ -139,10 +140,15 @@ public class SendUtils {
 	 * @return the MessageHeader object
 	 */
 	private static MessageHeader createMetaHeader(byte[] meta) {
-
-		Object[] iov = new Object[2];
-		iov[0] = meta;
-		iov[1] = JALP_BREAK_STR;
+		Object[] iov;
+		if(meta != null) {
+			iov = new Object[2];
+			iov[0] = meta;
+			iov[1] = JALP_BREAK_STR;
+		} else {
+			iov = new Object[1];
+			iov[0] = JALP_BREAK_STR;
+		}
 
 		MessageHeader mh = new MessageHeader();
 		mh.setIov(iov);

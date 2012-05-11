@@ -111,11 +111,19 @@ public class JALUtils {
 	 */
 	public static void processSend(JALProducer producer, String buffer) throws Exception {
 
-		InputStream digestStream = new ByteArrayInputStream(buffer.getBytes());
+		InputStream digestStream = null;
+		if(buffer != null) {
+			digestStream = new ByteArrayInputStream(buffer.getBytes());
+		}
 		Document doc = processXML(producer, digestStream);
 
-		InputStream sendStream = new ByteArrayInputStream(buffer.getBytes());
-		send(doc, producer.getSocketFile(), sendStream,  buffer.length(), producer.getMessageType());
+		InputStream sendStream = null;
+		int bufferLength = 0;
+		if(buffer != null) {
+			sendStream = new ByteArrayInputStream(buffer.getBytes());
+			bufferLength = buffer.length();
+		}
+		send(doc, producer.getSocketFile(), sendStream,  bufferLength, producer.getMessageType());
 	}
 
 	/**
@@ -131,27 +139,31 @@ public class JALUtils {
 			throw new JALException("The JALProducer must not be null.");
 		}
 
+		Document doc = null;
 		ApplicationMetadataXML xml = producer.getXml();
-		if(xml == null) {
+
+		if(xml == null && !MessageType.JALP_LOG_MSG.equals(producer.getMessageType())) {
 			throw new JALException("The ApplicationMetadataXML must be set in the JALProducer.");
 		}
 
-		xml.prepareSend(producer.getHostName(), producer.getApplicationName());
+		if(xml != null) {
+			xml.prepareSend(producer.getHostName(), producer.getApplicationName());
 
-		Document doc = xml.marshal();
+			doc = xml.marshal();
 
-		if(producer.getDigestMethod() != null && digestStream != null) {
-			createManifest(doc, producer.getDigestMethod(), digestStream, producer.getMessageType());
-		}
+			if(producer.getDigestMethod() != null && digestStream != null) {
+				createManifest(doc, producer.getDigestMethod(), digestStream, producer.getMessageType());
+			}
 
-		if(producer.getPrivateKey() != null && producer.getPublicKey() != null) {
-			sign(doc, producer);
-		}
+			if(producer.getPrivateKey() != null && producer.getPublicKey() != null) {
+				sign(doc, producer);
+			}
 
-		if(producer.getDigestMethod() != null && digestStream != null) {
-			//Move the manifest to the end of the document
-			Node manifest = doc.getElementsByTagName("Manifest").item(0);
-			doc.getDocumentElement().appendChild(manifest);
+			if(producer.getDigestMethod() != null && digestStream != null) {
+				//Move the manifest to the end of the document
+				Node manifest = doc.getElementsByTagName("Manifest").item(0);
+				doc.getDocumentElement().appendChild(manifest);
+			}
 		}
 
 		return doc;
@@ -363,17 +375,20 @@ public class JALUtils {
 		}
 		if(socketFile != null && !"".equals(socketFile)) {
 
-			TransformerFactory transFactory = TransformerFactory.newInstance();
-			Transformer trans = transFactory.newTransformer();
-			StringWriter writer = new StringWriter();
-			trans.transform(new DOMSource(doc), new StreamResult(writer));
-			String appMeta = writer.toString();
-
 			long appMetaLength = 0;
 			byte[] appMetaBytes = null;
-			if(appMeta != null) {
-				appMetaBytes = appMeta.getBytes();
-				appMetaLength = appMetaBytes.length;
+
+			if(doc != null) {
+				TransformerFactory transFactory = TransformerFactory.newInstance();
+				Transformer trans = transFactory.newTransformer();
+				StringWriter writer = new StringWriter();
+				trans.transform(new DOMSource(doc), new StreamResult(writer));
+				String appMeta = writer.toString();
+
+				if(appMeta != null) {
+					appMetaBytes = appMeta.getBytes();
+					appMetaLength = appMetaBytes.length;
+				}
 			}
 
 			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, appMetaBytes, socketFile);

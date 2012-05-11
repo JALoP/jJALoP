@@ -303,7 +303,7 @@ public class JALProducer {
 	 */
 	public void jalpJournal(String buffer) throws Exception {
 		if(buffer == null || "".equals(buffer)) {
-			throw new JALException("String input is required");
+			throw new JALException("String buffer is required");
 		}
 
 		this.messageType = MessageType.JALP_JOURNAL_MSG;
