@@ -832,4 +832,39 @@ public class TestJALUtils {
 			throw((Exception)e.getCause());
 		}
 	}
+
+	@Test
+	public void testProcessSendWorksWithFile() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, InputStream is, long bufferLength, MessageType messageType) throws Exception {}
+		};
+
+		File file = new File("test-input/testBuffer");
+		JALUtils.processSend(prod, file);
+	}
+
+	@Test
+	public void testProcessSendWorksWithString() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, InputStream is, long bufferLength, MessageType messageType) throws Exception {}
+		};
+
+		JALUtils.processSend(prod, "String buffer");
+	}
 }
