@@ -71,7 +71,7 @@ $(PACKAGE_DIR)/MessageHeader.class: $(PACKAGE_DIR)/MessageHeader.java
 	$(JAVAC) $(JAVA_FLAGS) $?
 
 install: nativelib
-	cp $(NATIVELIB) $(PREFIX)/lib
+	cp $(NATIVELIB)* $(PREFIX)/lib
 
 uninstall:
 	rm -f $(PREFIX)/lib/$(NATIVELIB)
