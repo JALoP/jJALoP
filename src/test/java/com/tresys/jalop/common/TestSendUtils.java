@@ -1,5 +1,5 @@
 /**
- * Tests for common utility class.
+ * Tests for common send utility class.
  * <p>
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
@@ -26,6 +26,8 @@
  */
 package com.tresys.jalop.common;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -34,27 +36,29 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+
 import mockit.Mock;
 import mockit.Mocked;
 import mockit.Mockit;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import com.etsy.net.MessageHeader;
 import com.etsy.net.UnixDomainSocket;
 import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
 import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
-import com.tresys.jalop.common.SendUtils;
 
 public class TestSendUtils {
 
 	private static SendUtils utils;
-	
+
 	@Before
 	public void setup() {
 		utils = new SendUtils();		
 	}
-	
+
 	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
 		@Mock
 		public void $init(String socketFile, int type) {
@@ -69,10 +73,10 @@ public class TestSendUtils {
 
 	public static class MockUnixDomainSocket {
 		@Mocked UnixDomainSocketOutputStream out;
-		
+
 		@Mock
 		public void $init() {}
-		
+
 		@Mock
 		public OutputStream getOutputStream() {
 			UnixDomainSocketClient udsc;
@@ -85,29 +89,7 @@ public class TestSendUtils {
 			return out;
 		}
 	}
-	
-	@Test(expected = Exception.class)
-	public void testCreateAndSendHeadersFailNullInput() throws Exception {
-		MessageType messageType = null;
-		long dataLen = 0;
-		long metaLen = 0;
-		InputStream is = null;
-		byte[] meta = null;
-		String socketFile = null;
-		
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
-		try {
-			messageType = MessageType.JALP_LOG_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
-		} catch (Exception e) {
-			throw((Exception)e.getCause());
-		}
-		
-	}
-	
+
 	@Test
 	public void testCreateAndSendHeadersSuccessEmptyBuffer() throws Exception {
 		MessageType messageType = null;
@@ -116,11 +98,11 @@ public class TestSendUtils {
 		InputStream is = new ByteArrayInputStream("".getBytes());
 		byte[] meta = null;
 		String socketFile = null;
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
 			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
@@ -133,9 +115,9 @@ public class TestSendUtils {
 		} catch (Exception e) {
 			throw((Exception)e.getCause());
 		}
-		
+
 	}
-	
+
 	@Test
 	public void testCreateAndSendHeadersSuccess() throws Exception {
 		MessageType messageType = null;
@@ -144,11 +126,11 @@ public class TestSendUtils {
 		InputStream is = new ByteArrayInputStream("abcde".getBytes());
 		byte[] meta = "ab".getBytes();
 		String socketFile = null;
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
 			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
@@ -162,7 +144,24 @@ public class TestSendUtils {
 			throw((Exception)e.getCause());
 		}
 	}
-	
+
+	@Test
+	public void testCreateAndSendHeadersWorksWithNullIS() throws Exception {
+		MessageType messageType = null;
+		long dataLen = 0;
+		long metaLen = 0;
+		InputStream is = null;
+		byte[] meta = null;
+		String socketFile = null;
+
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+
+		messageType = MessageType.JALP_LOG_MSG;
+		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+	}
+
 	@Test
 	public void testCreateBreakHeaderSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -172,7 +171,7 @@ public class TestSendUtils {
 		assertTrue(ret.getIov()[0].equals("BREAK"));
 		
 	}
-	
+
 	@Test
 	public void testCreateMetaHeaderSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -182,9 +181,7 @@ public class TestSendUtils {
 		assertTrue(Arrays.equals((byte[]) ret.getIov()[0], "HEADER".getBytes()));
 		assertTrue(ret.getIov()[1].equals("BREAK"));
 	}
-	
-	
-	
+
 	@Test
 	public void testCreateMetaHeaderEmptyBufferSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -194,7 +191,7 @@ public class TestSendUtils {
 		assertTrue(Arrays.equals((byte[]) ret.getIov()[0],  "".getBytes()));
 		assertTrue(ret.getIov()[1].equals("BREAK"));
 	}
-	
+
 	@Test
 	public void testCreateDataHeaderSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -203,7 +200,7 @@ public class TestSendUtils {
 		ret = (MessageHeader) method.invoke(utils, "This is data".getBytes(), 12);
 		assertTrue(Arrays.equals((byte[]) ret.getIov()[0], "This is data".getBytes()));
 	}
-	
+
 	@Test
 	public void testCreateDataHeaderEmptyBufferSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -212,7 +209,7 @@ public class TestSendUtils {
 		ret = (MessageHeader) method.invoke(utils, "".getBytes(), 0);
 		assertTrue(Arrays.equals((byte[]) ret.getIov()[0], "".getBytes()));
 	}
-	
+
 	@Test
 	public void testCreateDataHeaderLargeBufferSuccess() throws Exception {
 		MessageHeader ret = null;
@@ -225,7 +222,7 @@ public class TestSendUtils {
 		ret = (MessageHeader) method.invoke(utils, bufferBytes, bufferBytes.length);
 		assertTrue(Arrays.equals((byte[]) ret.getIov()[0], bufferBytes));
 	}
-	
+
 	@Test(expected = Exception.class)
 	public void testCreateDataHeaderIncorrectBufferLengthFailure() throws Exception {
 		Method method = SendUtils.class.getDeclaredMethod("createDataHeader", byte[].class, int.class);
@@ -237,5 +234,36 @@ public class TestSendUtils {
 		}
 		assertTrue(false);
 	}
-}
 
+	@Test
+	public void testCreateMetaHeaderWorksWithNullMeta() throws Exception {
+		try {
+			Method method = SendUtils.class.getDeclaredMethod("createMetaHeader", new Class[]{byte[].class});
+			method.setAccessible(true);
+			MessageHeader mh = (MessageHeader)method.invoke(null, new Object[]{null});
+			assertNotNull(mh);
+			assertEquals(1, mh.getIov().length);
+			assertEquals(SendUtils.JALP_BREAK_STR, mh.getIov()[0]);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	@Test
+	public void testCreateMetaHeaderWorksWithNonNullMeta() throws Exception {
+		String buffer = new String("buffer");
+		byte[] bufferBytes = buffer.getBytes();
+		try {
+			Method method = SendUtils.class.getDeclaredMethod("createMetaHeader", new Class[]{byte[].class});
+			method.setAccessible(true);
+			MessageHeader mh = (MessageHeader)method.invoke(null, new Object[]{bufferBytes});
+			assertNotNull(mh);
+			assertEquals(2, mh.getIov().length);
+			assertEquals(bufferBytes, mh.getIov()[0]);
+			assertEquals(SendUtils.JALP_BREAK_STR, mh.getIov()[1]);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+}

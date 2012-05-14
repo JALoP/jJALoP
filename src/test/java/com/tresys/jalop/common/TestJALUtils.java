@@ -613,7 +613,28 @@ public class TestJALUtils {
 			throw e;
 		}
 	}
-	
+
+	@Test
+	public void testSendWorksWithNullDocAndNonNullBuffer() throws Exception {
+		
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+
+		new MockUp<SendUtils>() {
+			@Mock
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, byte[] meta, String socketFile) throws Exception {}
+		};
+
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, long.class, MessageType.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{null, (String)"/path/to/file", new ByteArrayInputStream("String buffer".getBytes()), "String buffer".length(), MessageType.JALP_LOG_MSG});
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
 	@Test
 	public void testSendWorksWithNonNullBuffer() throws Exception {
 		LoggerType logger = new LoggerType();
@@ -708,6 +729,46 @@ public class TestJALUtils {
 		Field messageType = JALProducer.class.getDeclaredField("messageType");
 		messageType.setAccessible(true);
 		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{prod, is});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
+	}
+
+	@Test
+	public void testProcessXMLWorksWithNullXML() throws Exception {
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
+		try {
+			Method method = JALUtils.class.getDeclaredMethod("processXML", new Class[]{JALProducer.class, InputStream.class});
+			method.setAccessible(true);
+			method.invoke(null, new Object[]{prod, is});
+		} catch (InvocationTargetException e) {
+			throw((Exception)e.getCause());
+		}
+	}
+	
+	@Test(expected = JALException.class)
+	public void testProcessXMLFailsWithNullXMLAndNotLog() throws Exception {
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+		KeyPair kp = kpg.generateKeyPair();
+		JALProducer prod = new JALProducer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_AUDIT_MSG);
 
 		InputStream is = new ByteArrayInputStream("String buffer".getBytes());
 		try {
@@ -866,5 +927,22 @@ public class TestJALUtils {
 		};
 
 		JALUtils.processSend(prod, "String buffer");
+	}
+
+	@Test
+	public void testProcessSendWorksWithNullString() throws Exception {
+		LoggerXML loggerXml = new LoggerXML(logger);
+		JALProducer prod = new JALProducer(loggerXml, "hostname", "app_name", null, null, null, DMType.SHA256, "/path/to/socket");
+
+		Field messageType = JALProducer.class.getDeclaredField("messageType");
+		messageType.setAccessible(true);
+		messageType.set(prod, MessageType.JALP_LOG_MSG);
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void send(Document doc, String socketFile, InputStream is, long bufferLength, MessageType messageType) throws Exception {}
+		};
+
+		JALUtils.processSend(prod, (String)null);
 	}
 }
