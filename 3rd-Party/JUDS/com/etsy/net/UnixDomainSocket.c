@@ -374,6 +374,10 @@ Java_com_etsy_net_UnixDomainSocket_nativeSendmsg(JNIEnv * jEnv,
 		(*jEnv)->ReleaseByteArrayElements(jEnv,  objs[i], byteArrayVals[i], JNI_ABORT);
 	}
 
+	for(i = 0; i < numStrings; i++) {
+		free((char*)stringVals[i]);
+	}
+
 	free(shortVals);
 	free(intVals);
 	free(longVals);
