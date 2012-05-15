@@ -1,0 +1,98 @@
+This is a reference for the Java implementation of the Journal, Audit, and
+Logging Protocol (JALoP).
+The Java implementation is divided into a number of components:
+  The JALoP Producer Library (JPL)
+
+
+The following libraries are included in the 3rd-party directory:
+  JUDS
+
+
+Building and Installing
+This project uses the maven (maven.apache.org) build tool version 3.0.4 and will
+compile under Java 1.6 update 27.
+
+Installation Instructions:
+
+1. Download and install maven
+	(Follow instructions at http://maven.apache.org/download.html)
+
+2. Install JUDS
+	- Make sure libgcc.i686 and glibc-devel.i686 are installed
+	- From the 3rd-Party/JUDS directory, run ./configure to create the
+	makefile
+	- Update the JAVA_HOME variable in the makefile if necessary
+	- Run make
+	- Run make install
+
+3. Install JUDS dependency with maven
+	- From jjalop directory, run mvn install:install-file
+	-DgroupId=com.etsy.net -DartifactId=juds -Dversion=0.94 -Dpackaging=jar
+	-Dfile=3rd-Party/JUDS/juds-0.94.jar
+
+4. Package JALoP project
+	- Run mvn package
+
+
+Installation Instructions for JALPTest:
+
+1. Create jjalop-1.0-jar-with-dependencies.jar with the above installation
+instructions.
+
+2. Install jjalop dependency with maven
+	- From the jjalop/utils/JalpTest directory, run mvn install:install-file
+	-DgroupId=com.tresys.jalop -DartifactId=jjalop -Dversion=1.0
+	-Dpackaging=jar -Dfile=../../target/jjalop-1.0-jar-with-dependencies.jar
+
+3. Package JALPTest project
+	- Run mvn package
+
+4. To run the JALPTest jar
+	- From the jjalop/utils/JalpTest directory, run java -cp
+	target/jalptest-1.0-jar-with-dependencies.jar JALPTest <options>
+
+Usage for JALPTest:
+-a      (optional) the full, or relative path to a file to use for generating
+	the application metadata.
+-p      The full or relative path to a file that should be used as the payload
+	for this particular record.
+-s      Indicates the payload should be taken from <stdin>.
+-t, --type=T    Indicates which type of data to send: 'j' (journal record),
+	'a' (audit record), 'l' (log entry), or 'f' (journal record using file
+	descriptor passing).
+-h      Print a summary of options.
+-j      The full or relative path to the JALoP socket.
+-k      The full or relative path to a private key file to be used for signing.
+	Must also specify '-a'.
+-b      The full or relative path to a public key file to be used for signing.
+	Must also specify '-a'.
+-c      The full or relative path to a certificate file to be used for signing.
+	Requires '-k'.
+-d      Calculates and adds a SHA256 digest of the payload to the application
+	metadata. Must also specify '-a'.
+
+
+Other Options (these steps do not need to be executed in order to use the JALoP
+libraries)
+To run the unit tests and generate code coverage reports, run
+$ mvn test
+The generated code coverage reports will appear in the directory coverage-report
+
+To clean the target directory, run
+$ mvn clean
+
+To generate Javadoc documentation, run
+$ mvn site
+The generated documents will appear in the directory target/site
+
+
+All of the source code for the implementation is under the 'src' directory. The
+src directory is divided into different sections based on functionality, subdirs
+such as producer, common, etc.
+
+This project is built and tested in the following environments:
+  RedHat Enterprise Linux (RHEL) 5 on x86_64, using gcc version 4.1.2
+  RHEL 6 on x86_64, using gcc version 4.4.5
+  RHEL 6 on i386, using gcc version 4.4.5
+  Solaris 10 TX 09/10 on i386, using gcc version 3.4.3
+
