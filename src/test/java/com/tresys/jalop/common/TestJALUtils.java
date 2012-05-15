@@ -1,29 +1,27 @@
-/**
- * Tests for common utility class.
- * <p>
+/*
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
- * <p>
+ *
  * All other source code is copyright Tresys Technology and licensed as below.
- * <p>
+ *
  * Copyright (c) 2012 Tresys Technology LLC, Columbia, Maryland, USA
- * <p>
+ *
  * This software was developed by Tresys Technology LLC
  * with U.S. Government sponsorship.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
+
 package com.tresys.jalop.common;
 
 import static org.junit.Assert.assertEquals;
@@ -88,12 +86,15 @@ import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALUtils.DMType;
 import com.tresys.jalop.producer.ApplicationMetadataXML;
-import com.tresys.jalop.producer.Producer;
 import com.tresys.jalop.producer.LoggerXML;
+import com.tresys.jalop.producer.Producer;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
 import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
 
+/**
+ * Tests for common utility class.
+ */
 public class TestJALUtils {
 
 	private static JALUtils utils;
@@ -101,14 +102,14 @@ public class TestJALUtils {
 	private ApplicationMetadataType amt;
 	private LoggerType logger;
 	private Document doc;
-	
+
 	@Before
 	public void setup() {
 		utils = new JALUtils();
 		of = new ObjectFactory();
 		amt = new ApplicationMetadataType();
-		logger = new LoggerType();		
-		
+		logger = new LoggerType();
+
 	}
 
 	@Test
@@ -125,7 +126,7 @@ public class TestJALUtils {
 		assertTrue(date.getYear() == xmlCal.getYear());
 		assertTrue(date.getEon() == xmlCal.getEon());
 	}
-	
+
 	@Test(expected = DatatypeConfigurationException.class)
 	public void testGetCurrentTimeThrowsExceptionOnFailure() throws Exception {
 		new MockUp<DatatypeFactory>() {
@@ -135,15 +136,15 @@ public class TestJALUtils {
 				throw new DatatypeConfigurationException();
 			}
 		};
-		
+
 		assertTrue(utils.getCurrentTime() == null);
 	}
-	
+
 	@Test
 	public void testMarshalWorks() throws Exception {
 		amt.setJID("JID");
 		amt.setLogger(logger);
-		
+
 		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
 		assertNotNull(appMeta);
 		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
@@ -151,7 +152,7 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 		assertNotNull(doc);
-		
+
 		Node appMetaElem = doc.getElementsByTagName("ApplicationMetadata").item(0);
 		assertNotNull(appMetaElem);
 		assertEquals("ApplicationMetadata", appMetaElem.getNodeName());
@@ -161,7 +162,7 @@ public class TestJALUtils {
 		assertEquals("Logger", loggerElem.getNodeName());
 		assertEquals(null, loggerElem.getNodeValue());
 	}
-	
+
 	@Test(expected = JAXBException.class)
 	public void testMarshalThrowsJAXBExceptionWhenMarshalFails() throws Exception {
 
@@ -171,12 +172,12 @@ public class TestJALUtils {
 				m.marshal((Object)any, (Document)any); result = new JAXBException("error");
 			}
 		};
-		
+
 		JAXBElement<ApplicationMetadataType> appMeta = of.createApplicationMetadata(amt);
 		assertNotNull(appMeta);
 		JAXBContext jc = JAXBContext.newInstance(ApplicationMetadataType.class.getPackage().getName());
 		assertNotNull(jc);
-		
+
 		doc = utils.marshal(jc, appMeta);
 	}
 
@@ -557,25 +558,25 @@ public class TestJALUtils {
 			throw (Exception)ite.getCause();
 		}
 	}
-	
+
 	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
 		@Mock
 		public void $init(String socketFile, int type) {
 			out = new UnixDomainSocketOutputStream();
 		}
 	}
-	
+
 	public static class MockUnixDomainSocketOutputStream {
 		@Mock
 		public void sendmsg(MessageHeader header) {}
 	}
-	
+
 	public static class MockUnixDomainSocket {
 		@Mocked UnixDomainSocketOutputStream out;
-		
+
 		@Mock
 		public void $init() {}
-		
+
 		@Mock
 		public OutputStream getOutputStream() {
 			UnixDomainSocketClient udsc;
@@ -588,14 +589,14 @@ public class TestJALUtils {
 			return out;
 		}
 	}
-	
+
 	@Test
 	public void testSendWorksWithNullBuffer() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
@@ -616,7 +617,7 @@ public class TestJALUtils {
 
 	@Test
 	public void testSendWorksWithNullDocAndNonNullBuffer() throws Exception {
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
@@ -641,7 +642,7 @@ public class TestJALUtils {
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
@@ -659,14 +660,14 @@ public class TestJALUtils {
 			throw e;
 		}
 	}
-	
+
 	@Test(expected = JALException.class)
 	public void testSendThrowsJALExceptionWhenSocketIsNull() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
@@ -679,18 +680,18 @@ public class TestJALUtils {
 			throw((Exception)e.getCause());
 		}
 	}
-	
+
 	@Test(expected = JALException.class)
 	public void testSendThrowsJALExceptionWhenSocketIsEmptyString() throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
-		
+
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-		
+
 		try {
 			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, long.class, MessageType.class});
 			method.setAccessible(true);
@@ -759,7 +760,7 @@ public class TestJALUtils {
 			throw((Exception)e.getCause());
 		}
 	}
-	
+
 	@Test(expected = JALException.class)
 	public void testProcessXMLFailsWithNullXMLAndNotLog() throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");

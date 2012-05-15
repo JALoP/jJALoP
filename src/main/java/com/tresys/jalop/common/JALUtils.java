@@ -1,29 +1,27 @@
-/**
- * Class containing common utility functions.
- * <p>
+/*
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
- * <p>
+ *
  * All other source code is copyright Tresys Technology and licensed as below.
- * <p>
+ *
  * Copyright (c) 2012 Tresys Technology LLC, Columbia, Maryland, USA
- * <p>
+ *
  * This software was developed by Tresys Technology LLC
  * with U.S. Government sponsorship.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
+
 package com.tresys.jalop.common;
 
 import java.io.ByteArrayInputStream;
@@ -82,6 +80,9 @@ import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.ReferenceType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformType;
 import com.tresys.jalop.schemas.org.w3._2000._09.xmldsig_.TransformsType;
 
+/**
+ * Class containing common utility functions.
+ */
 public class JALUtils {
 
 	public static final String SCHEMA_LOCATION = "/com/tresys/jalop/applicationMetadataTypes.xsd";
@@ -170,13 +171,13 @@ public class JALUtils {
 	}
 
 	/**
-	 * Builds a document and marshals the xml into the document. 
+	 * Builds a document and marshals the xml into the document.
 	 * This also validates the xml against the given schema.
 	 *
 	 * @param jc		the JAXBContext of the correct class
 	 * @param element	the JAXBElement created by ObjectFactory for the correct class
 	 * @return	the marshaled document
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public static Document marshal(JAXBContext jc, JAXBElement element) throws Exception {
 		Marshaller m = jc.createMarshaller();

@@ -1,42 +1,53 @@
-/**
- * Abstract class that has an ApplicationMetadataType and holds common info
- * for the three possible types: logger, syslog, and custom.
- * <p>
+/*
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
- * <p>
+ *
  * All other source code is copyright Tresys Technology and licensed as below.
- * <p>
+ *
  * Copyright (c) 2012 Tresys Technology LLC, Columbia, Maryland, USA
- * <p>
+ *
  * This software was developed by Tresys Technology LLC
  * with U.S. Government sponsorship.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.tresys.jalop.producer;
 
 import java.util.UUID;
 
-import com.tresys.jalop.common.JALException;
-import com.tresys.jalop.common.JALUtils;
-import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.*;
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 
 import org.w3c.dom.Document;
 
+import com.tresys.jalop.common.JALException;
+import com.tresys.jalop.common.JALUtils;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.AES128CBCType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.AES192CBCType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.AES256CBCType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ApplicationMetadataType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.JournalMetadataType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.LoggerType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.ObjectFactory;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.SyslogType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.TransformType;
+import com.tresys.jalop.schemas.mil.dod.jalop_1_0.applicationmetadatatypes.XorECBType;
+
+/**
+ * Abstract class that has an ApplicationMetadataType and holds common info
+ * for the three possible types: logger, syslog, and custom.
+ */
 public abstract class ApplicationMetadataXML {
 
 	private static ObjectFactory of;
@@ -239,9 +250,9 @@ public abstract class ApplicationMetadataXML {
 	}
 
 	/**
-	 * Builds a document and marshals the xml into the document. 
+	 * Builds a document and marshals the xml into the document.
 	 * This also validates the xml against the given schema.
-	 * 
+	 *
 	 * @return	the marshalled document
 	 * @throws Exception
 	 */
@@ -258,7 +269,7 @@ public abstract class ApplicationMetadataXML {
 	 *
 	 * @param hostName			the name of the host
 	 * @param applicationName	the name of the application
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public void prepareSend(String hostName, String applicationName) throws Exception {
 		// To be overridden in subclasses if necessary

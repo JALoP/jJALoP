@@ -1,23 +1,20 @@
-/**
- * Producer class stores relevant application data and is the primary class
- * for the producer library.
- * <p>
+/*
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
- * <p>
+ *
  * All other source code is copyright Tresys Technology and licensed as below.
- * <p>
+ *
  * Copyright (c) 2012 Tresys Technology LLC, Columbia, Maryland, USA
- * <p>
+ *
  * This software was developed by Tresys Technology LLC
  * with U.S. Government sponsorship.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +34,12 @@ import com.tresys.jalop.common.JALException;
 import com.tresys.jalop.common.JALUtils;
 import com.tresys.jalop.common.JALUtils.DMType;
 
+/**
+ * Producer class stores relevant application data and is the primary class
+ * for the producer library.
+ */
 public class Producer {
-	
+
 	private ApplicationMetadataXML xml;
 	private String hostName;
 	private String applicationName;
@@ -48,17 +49,17 @@ public class Producer {
 	private DMType digestMethod;
 	private String socketFile;
 	private MessageType messageType;
-	
+
 	/**
-	 * Constructor 
+	 * Constructor
 	 */
 	public Producer() {
-		
+
 	}
-	
+
 	/**
 	 * Constructor that takes an ApplicationMetadataXML
-	 * 
+	 *
 	 * @param xml	the ApplicationMetadataXML
 	 */
 	public Producer(ApplicationMetadataXML xml) {
@@ -67,7 +68,7 @@ public class Producer {
 
 	/**
 	 * Constructor with all the possible params
-	 * 
+	 *
 	 * @param xml				the ApplicationMetadataXML
 	 * @param hostName			the name of the host
 	 * @param applicationName	the name of the application
@@ -92,61 +93,61 @@ public class Producer {
 
 	/**
 	 * Sets the xml
-	 * 
+	 *
 	 * @param xml	the ApplicationMetadataXML to set
 	 */
 	public void setXml(ApplicationMetadataXML xml) {
 		this.xml = xml;
 	}
-	
+
 	/**
 	 * Gets the xml
-	 * 
+	 *
 	 * @return	the ApplicationMetadataXML
 	 */
 	public ApplicationMetadataXML getXml() {
 		return this.xml;
 	}
-	
+
 	/**
 	 * Sets the hostName
-	 * 
+	 *
 	 * @param hostName	the String to set
 	 */
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
 	}
-	
+
 	/**
 	 * Gets the hostName
-	 * 
+	 *
 	 * @return	the hostName property
 	 */
 	public String getHostName() {
 		return this.hostName;
 	}
-	
+
 	/**
 	 * Sets the applicationName
-	 * 
+	 *
 	 * @param applicationName	the String to set
 	 */
 	public void setApplicationName(String applicationName) {
 		this.applicationName = applicationName;
 	}
-	
+
 	/**
 	 * Gets the applicationName
-	 * 
+	 *
 	 * @return	the applicationName property
 	 */
 	public String getApplicationName() {
 		return this.applicationName;
 	}
-	
+
 	/**
 	 * Gets the privateKey
-	 * 
+	 *
 	 * @return the privateKey
 	 */
 	public PrivateKey getPrivateKey() {
@@ -155,7 +156,7 @@ public class Producer {
 
 	/**
 	 * Sets the privateKey
-	 * 
+	 *
 	 * @param privateKey the PrivateKey to set
 	 */
 	public void setPrivateKey(PrivateKey privateKey) {
@@ -164,7 +165,7 @@ public class Producer {
 
 	/**
 	 * Gets the publicKey
-	 * 
+	 *
 	 * @return the publicKey
 	 */
 	public PublicKey getPublicKey() {
@@ -173,7 +174,7 @@ public class Producer {
 
 	/**
 	 * Sets the publicKey
-	 * 
+	 *
 	 * @param publicKey the PublicKey to set
 	 */
 	public void setPublicKey(PublicKey publicKey) {
@@ -182,7 +183,7 @@ public class Producer {
 
 	/**
 	 * Gets the certificate
-	 * 
+	 *
 	 * @return the X509Certificate
 	 */
 	public X509Certificate getCertificate() {
@@ -191,7 +192,7 @@ public class Producer {
 
 	/**
 	 * Sets the certificate
-	 * 
+	 *
 	 * @param certificate the X509Certificate to set
 	 */
 	public void setCertificate(X509Certificate certificate) {
@@ -200,7 +201,7 @@ public class Producer {
 
 	/**
 	 * Gets the type of digest method
-	 * 
+	 *
 	 * @return the digestMethod
 	 */
 	public DMType getDigestMethod() {
@@ -209,7 +210,7 @@ public class Producer {
 
 	/**
 	 * Sets the type of digest method
-	 * 
+	 *
 	 * @param digestMethod the DMType to set
 	 */
 	public void setDigestMethod(DMType digestMethod) {
@@ -218,7 +219,7 @@ public class Producer {
 
 	/**
 	 * Gets the String which is a path to the socket file
-	 * 
+	 *
 	 * @return the socketFile String
 	 */
 	public String getSocketFile() {
@@ -227,7 +228,7 @@ public class Producer {
 
 	/**
 	 * Sets the path of the socket file
-	 * 
+	 *
 	 * @param socketFile the String path to the socket file to set
 	 */
 	public void setSocketFile(String socketFile) {
@@ -236,7 +237,7 @@ public class Producer {
 
 	/**
 	 * Gets messageType from an enum in ConnectionHeader
-	 * 
+	 *
 	 * @return the MessageType
 	 */
 	public MessageType getMessageType() {

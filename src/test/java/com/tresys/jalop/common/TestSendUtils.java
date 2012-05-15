@@ -1,29 +1,27 @@
-/**
- * Tests for common send utility class.
- * <p>
+/*
  * Source code in 3rd-party is licensed and owned by their respective
  * copyright holders.
- * <p>
+ *
  * All other source code is copyright Tresys Technology and licensed as below.
- * <p>
+ *
  * Copyright (c) 2012 Tresys Technology LLC, Columbia, Maryland, USA
- * <p>
+ *
  * This software was developed by Tresys Technology LLC
  * with U.S. Government sponsorship.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
+
 package com.tresys.jalop.common;
 
 import static org.junit.Assert.assertEquals;
@@ -50,13 +48,16 @@ import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
 import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 
+/**
+ * Tests for common send utility class.
+ */
 public class TestSendUtils {
 
 	private static SendUtils utils;
 
 	@Before
 	public void setup() {
-		utils = new SendUtils();		
+		utils = new SendUtils();
 	}
 
 	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
@@ -169,7 +170,7 @@ public class TestSendUtils {
 		method.setAccessible(true);
 		ret = (MessageHeader) method.invoke(utils, null);
 		assertTrue(ret.getIov()[0].equals("BREAK"));
-		
+
 	}
 
 	@Test
@@ -216,7 +217,7 @@ public class TestSendUtils {
 		byte[] bufferBytes = new byte[SendUtils.BUFFER_SIZE];
 		FileInputStream is = new FileInputStream("test-input/evenBuffer");
 		is.read(bufferBytes, 0, bufferBytes.length);
-		
+
 		Method method = SendUtils.class.getDeclaredMethod("createDataHeader", byte[].class, int.class);
 		method.setAccessible(true);
 		ret = (MessageHeader) method.invoke(utils, bufferBytes, bufferBytes.length);
