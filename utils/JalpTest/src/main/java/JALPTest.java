@@ -271,7 +271,7 @@ public class JALPTest {
 		+"-a      (optional) the full, or relative path to a file to use for generating the application metadata.\n"
 		+"-p      The full or relative path to a file that should be used as the payload for this particular record.\n"
 		+"-s      Indicates the payload should be taken from <stdin>.\n"
-		+"-t, --type=T    Indicates which type of data to send: 'j' (journal record, 'a' (audit record), 'l' (log entry), or 'f' (journal record using file descriptor passing).\n"
+		+"-t, --type=T    Indicates which type of data to send: 'j' (journal record), 'a' (audit record), 'l' (log entry), or 'f' (journal record using file descriptor passing).\n"
 		+"-h      Print a summary of options.\n"
         +"-j      The full or relative path to the JALoP socket.\n"
         +"-k      The full or relative path to a private key file to be used for signing. Must also specify '-a'.\n"
@@ -302,7 +302,7 @@ public class JALPTest {
 		options.addOption("a", true, "(optional) the full, or relative path to a file to use for generating the application metadata.");
 		options.addOption("p", true, "The full or relative path to a file that should be used as the payload for this particular record.");
 		options.addOption("s", false, "Indicates the payload should be taken from <stdin>.");
-		options.addOption("t", "type", true, "Indicates which type of data to send: 'j' (journal record, 'a' (audit record), 'l' (log entry), or 'f' (journal record using file descriptor passing).");
+		options.addOption("t", "type", true, "Indicates which type of data to send: 'j' (journal record), 'a' (audit record), 'l' (log entry), or 'f' (journal record using file descriptor passing).");
 		options.addOption("h", false, "Print a summary of options.");
 		options.addOption("j", true, "The full or relative path to the JALoP socket.");
 		options.addOption("k", true, "The full or relative path to a private key file to be used for signing. Must also specify '-a'.");
