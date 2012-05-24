@@ -326,4 +326,19 @@ public class Producer {
 		JALUtils.processSend(this, file);
 	}
 
+	/**
+	 * Sets the messageType to JALP_JOURNAL_FD_MSG and calls processSend in JALUtils
+	 *
+	 * @param file		required, a File which contains the buffer
+	 * @throws Exception
+	 */
+	public void jalpJournalFD(File file) throws Exception {
+		if(file == null) {
+			throw new JALException("File is required");
+		}
+
+		this.messageType = MessageType.JALP_JOURNAL_FD_MSG;
+		JALUtils.processSend(this, file);
+	}
+
 }

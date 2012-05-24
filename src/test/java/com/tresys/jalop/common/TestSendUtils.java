@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -106,13 +107,13 @@ public class TestSendUtils {
 
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_AUDIT_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_JOURNAL_FD_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_JOURNAL_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 		} catch (Exception e) {
 			throw((Exception)e.getCause());
 		}
@@ -134,13 +135,13 @@ public class TestSendUtils {
 
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_AUDIT_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_JOURNAL_FD_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 			messageType = MessageType.JALP_JOURNAL_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
 		} catch (Exception e) {
 			throw((Exception)e.getCause());
 		}
@@ -160,7 +161,29 @@ public class TestSendUtils {
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		messageType = MessageType.JALP_LOG_MSG;
-		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, meta, socketFile);
+		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+	}
+
+	@Test
+	public void testCreateHeaderSuccess() throws Exception {
+		ConnectionHeader ch = new ConnectionHeader((short) 1, MessageType.JALP_AUDIT_MSG, 100, 200);
+		Method method = SendUtils.class.getDeclaredMethod("createHeader", ConnectionHeader.class, File.class);
+		method.setAccessible(true);
+		MessageHeader mh = (MessageHeader) method.invoke(utils, ch, null);
+		assertEquals(mh.getIov()[0], (short)1);
+		assertEquals(mh.getIov()[1], (short)2);
+		assertEquals(mh.getIov()[2], (long) 100);
+		assertEquals(mh.getIov()[3], (long) 200);
+	}
+
+	@Test
+	public void testCreateHeaderWithFileSuccess() throws Exception {
+		ConnectionHeader ch = new ConnectionHeader((short) 1, MessageType.JALP_AUDIT_MSG, 100, 200);
+		File file = new File("test-input/testBuffer");
+		Method method = SendUtils.class.getDeclaredMethod("createHeader", ConnectionHeader.class, File.class);
+		method.setAccessible(true);
+		MessageHeader mh = (MessageHeader) method.invoke(utils, ch, file);
+		assertEquals(mh.getFilePath(), file.getAbsolutePath());
 	}
 
 	@Test

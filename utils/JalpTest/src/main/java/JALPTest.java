@@ -260,8 +260,7 @@ public class JALPTest {
 				producer.jalpJournal(input);
 			}
 		} else if("f".equals(type)) {
-			//File descriptors will be added to a later release
-			error("file descriptor handling has not been implemented yet.");
+			producer.jalpJournalFD(file);
 		} else {
 			error("record type of 'j', 'a', 'l', or 'f', must be specified.");
 		}

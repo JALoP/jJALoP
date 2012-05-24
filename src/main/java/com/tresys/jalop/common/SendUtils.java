@@ -24,6 +24,7 @@
 
 package com.tresys.jalop.common;
 
+import java.io.File;
 import java.io.InputStream;
 
 import com.etsy.net.JUDS;
@@ -47,6 +48,7 @@ public class SendUtils {
 	 * @param dataLen		a long which is the length of the data
 	 * @param metaLen		a long which is the length of the metadata
 	 * @param is			the data as an InputStream
+	 * @param file			a File for the buffer if sending by file descriptor
 	 * @param meta			a byte array which is the metadata
 	 * @param socketFile	a String which contains the path to the socket file
 	 * @throws Exception
@@ -55,6 +57,7 @@ public class SendUtils {
 											long dataLen,
 											long metaLen,
 											InputStream is,
+											File file,
 											byte[] meta,
 											String socketFile) throws Exception {
 
@@ -66,7 +69,7 @@ public class SendUtils {
 		ConnectionHeader connectionHeader = new ConnectionHeader((short)1, messageType, dataLen, metaLen);
 
 		// Create MessageHeader with ConnectionHeader info - send
-		out.sendmsg(createHeader(connectionHeader));
+		out.sendmsg(createHeader(connectionHeader, file));
 
 		// If messageType != 4 (fd) create MessageHeader with data info - send
 		if(MessageType.JALP_JOURNAL_FD_MSG != messageType) {
@@ -93,9 +96,10 @@ public class SendUtils {
 	 * Creates a MessageHeader object with the info from connectionHeader in iov.
 	 *
 	 * @param connectionHeader	A ConnectionHeader object filled in with the correct data
+	 * @param file				a File for the buffer if sending by file descriptor
 	 * @return the MessageHeader object
 	 */
-	private static MessageHeader createHeader(ConnectionHeader connectionHeader) {
+	private static MessageHeader createHeader(ConnectionHeader connectionHeader, File file) {
 
 		Object[] iov = new Object[4];
 		iov[0] = connectionHeader.getProtocolVersion();
@@ -105,6 +109,9 @@ public class SendUtils {
 
 		MessageHeader mh = new MessageHeader();
 		mh.setIov(iov);
+		if(file != null) {
+			mh.setFilePath(file.getAbsolutePath());
+		}
 
 		return mh;
 	}

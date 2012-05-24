@@ -302,4 +302,23 @@ public class TestProducer {
 		prod.jalpJournal((File)null);
 	}
 
+	@Test
+	public void testJalpJournalFDWorks() throws Exception {
+
+		new MockUp<JALUtils>() {
+			@Mock
+			void processSend(Producer producer, File file) throws Exception {}
+		};
+
+		Producer prod = new Producer();
+		prod.jalpJournalFD(new File("test-input/testBuffer"));
+		assertEquals(prod.getMessageType(), MessageType.JALP_JOURNAL_FD_MSG);
+	}
+
+	@Test(expected = JALException.class)
+	public void testJalpJournalFDThrowsExceptionWithNullFile() throws Exception {
+		Producer prod = new Producer();
+		prod.jalpJournalFD((File)null);
+	}
+
 }

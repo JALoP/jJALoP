@@ -15,6 +15,7 @@
 #include <strings.h>
 #include <errno.h>
 #include <stdint.h>
+#include <fcntl.h>
 
 #define ASSERTNOERR(cond, msg) do { \
     if (cond) { fprintf(stderr, "[%d] ", errno); perror(msg); return -1; }} while(0)
@@ -248,7 +249,6 @@ Java_com_etsy_net_UnixDomainSocket_nativeSendmsg(JNIEnv * jEnv,
                                jint jSocketFileHandle,
                                jobject messageHeader)
 {
-
 	jclass msghCls = (*jEnv)->GetObjectClass(jEnv, messageHeader);
 
 	// Get the iov from the message header
@@ -363,6 +363,37 @@ Java_com_etsy_net_UnixDomainSocket_nativeSendmsg(JNIEnv * jEnv,
 			// Return -1 because the class type sent isn't handled
 			return -1;
 		}
+	}
+
+	// Get the filePath from the message header, if any
+	jmethodID mGetFilePath = (*jEnv)->GetMethodID(jEnv, msghCls, "getFilePath", "()Ljava/lang/String;");
+	jstring filePath = (jobjectArray)(*jEnv)->CallObjectMethod(jEnv, messageHeader, mGetFilePath);
+
+	if(filePath != NULL) {
+
+		const char *path = (*jEnv)->GetStringUTFChars(jEnv, filePath, NULL);
+		int fd = open(path, O_RDONLY);
+
+		if(fd == -1) {
+			return -1;
+		}
+
+		char buffer[CMSG_SPACE(sizeof(fd))];
+		struct cmsghdr *cmsg;
+		int *fdptr;
+
+		msgh.msg_control = buffer;
+		msgh.msg_controllen = sizeof(buffer);
+
+		cmsg = CMSG_FIRSTHDR(&msgh);
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
+		fdptr = (int *) CMSG_DATA(cmsg);
+		memcpy(fdptr, &fd, sizeof(fd));
+		msgh.msg_controllen = cmsg->cmsg_len;
+
+		free((char*)path);
 	}
 
 	int flags = 0;

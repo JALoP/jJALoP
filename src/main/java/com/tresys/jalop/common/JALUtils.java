@@ -99,8 +99,12 @@ public class JALUtils {
 		InputStream digestStream =  new FileInputStream(file);
 		Document doc = processXML(producer, digestStream);
 
-		InputStream sendStream = new FileInputStream(file);
-		send(doc, producer.getSocketFile(), sendStream, file.length(), producer.getMessageType());
+		if(producer.getMessageType().equals(MessageType.JALP_JOURNAL_FD_MSG)) {
+			send(doc, producer.getSocketFile(), null, file, file.length(), producer.getMessageType());
+		} else {
+			InputStream sendStream = new FileInputStream(file);
+			send(doc, producer.getSocketFile(), sendStream, null, file.length(), producer.getMessageType());
+		}
 	}
 
 	/**
@@ -124,7 +128,7 @@ public class JALUtils {
 			sendStream = new ByteArrayInputStream(buffer.getBytes());
 			bufferLength = buffer.length();
 		}
-		send(doc, producer.getSocketFile(), sendStream,  bufferLength, producer.getMessageType());
+		send(doc, producer.getSocketFile(), sendStream, null, bufferLength, producer.getMessageType());
 	}
 
 	/**
@@ -367,11 +371,12 @@ public class JALUtils {
 	 * @param doc			the marshaled xml doc
 	 * @param socketFile	the socket file
 	 * @param is			an InputStream for the buffer
+	 * @param file			a File for the buffer if sending by file descriptor
 	 * @param messageType	the type of message to send
 	 * @throws Exception
 	 */
-	private static void send(Document doc, String socketFile, InputStream is, long bufferLength, MessageType messageType) throws Exception {
-		if(doc == null && is == null) {
+	private static void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {
+		if(doc == null && is == null && file == null) {
 			throw new JALException("Error in JALUtils.send - doc and buffer cannot both be null");
 		}
 		if(socketFile != null && !"".equals(socketFile)) {
@@ -392,7 +397,7 @@ public class JALUtils {
 				}
 			}
 
-			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, appMetaBytes, socketFile);
+			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, file, appMetaBytes, socketFile);
 
 		} else {
 			throw new JALException("Error in JALUtils.send - socketFile path must be set in producer");

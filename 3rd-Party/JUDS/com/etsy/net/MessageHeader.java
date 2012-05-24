@@ -30,6 +30,7 @@ package com.etsy.net;
 public class MessageHeader {
 
 	Object[] iov;
+	String filePath;
 
 	/**
 	 * Constructor
@@ -50,6 +51,20 @@ public class MessageHeader {
 	 */
 	public void setIov(Object[] iov) {
 		this.iov = iov;
+	}
+
+	/**
+	 * @return the filePath String
+	 */
+	public String getFilePath() {
+		return filePath;
+	}
+
+	/**
+	 * @param filePath	the String to set
+	 */
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 
 }
