@@ -19,19 +19,19 @@ Installation Instructions:
 
 2. Install JUDS
 	- Make sure libgcc.i686 and glibc-devel.i686 are installed
-	- From the 3rd-Party/JUDS directory, run ./configure to create the
+	- From the 3rd-Party/JUDS directory, run './configure' to create the
 	makefile
 	- Update the JAVA_HOME variable in the makefile if necessary
-	- Run make
-	- Run make install
+	- Run 'make'
+	- Run 'make install'
 
 3. Install JUDS dependency with maven
-	- From jjalop directory, run mvn install:install-file
-	-DgroupId=com.etsy.net -DartifactId=juds -Dversion=0.94 -Dpackaging=jar
-	-Dfile=3rd-Party/JUDS/juds-0.94.jar
+	- From jjalop directory, run:
+		mvn install:install-file -DgroupId=com.etsy.net -DartifactId=juds \
+		-Dversion=0.94 -Dpackaging=jar -Dfile=3rd-Party/JUDS/juds-0.94.jar
 
 4. Package JALoP project
-	- Run mvn package
+	- Run 'mvn package'
 
 
 Installation Instructions for JALPTest:
@@ -40,16 +40,18 @@ Installation Instructions for JALPTest:
 instructions.
 
 2. Install jjalop dependency with maven
-	- From the jjalop/utils/JalpTest directory, run mvn install:install-file
-	-DgroupId=com.tresys.jalop -DartifactId=jjalop -Dversion=1.0
-	-Dpackaging=jar -Dfile=../../target/jjalop-1.0-jar-with-dependencies.jar
+	- From the jjalop/utils/JalpTest directory, run:
+		mvn install:install-file -DgroupId=com.tresys.jalop \
+		-DartifactId=jjalop -Dversion=1.0 -Dpackaging=jar \
+		-Dfile=../../target/jjalop-1.0-jar-with-dependencies.jar
 
 3. Package JALPTest project
-	- Run mvn package
+	- Run 'mvn package'
 
 4. To run the JALPTest jar
-	- From the jjalop/utils/JalpTest directory, run java -cp
-	target/jalptest-1.0-jar-with-dependencies.jar JALPTest <options>
+	- From the jjalop/utils/JalpTest directory, run:
+		java -cp target/jalptest-1.0-jar-with-dependencies.jar \
+		JALPTest <options>
 
 Usage for JALPTest:
 -a      (optional) the full, or relative path to a file to use for generating
