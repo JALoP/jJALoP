@@ -92,6 +92,18 @@ All of the source code for the implementation is under the 'src' directory. The
 src directory is divided into different sections based on functionality, subdirs
 such as producer, common, etc.
 
+A JALoP log4j appender is supplied with the Java implementation of JALoP.  The
+Configuration parameters for this appender are:
+  path - The path to the jalop socket file
+  hostName - The name of the host machine
+  appName - The name of the application that will be using the logger
+  useLocation - A boolean value used to set whether location information will
+		be included in the log or not
+  privateKeyPath - An optional path to the private key that will be used for signing
+  publicKeyPath - An optional path to the public key that will be used for signing
+  certPath - An optional path to the certificate that will be used for signing
+
+
 This project is built and tested in the following environments:
   RedHat Enterprise Linux (RHEL) 5 on x86_64, using gcc version 4.1.2
   RHEL 6 on x86_64, using gcc version 4.4.5
