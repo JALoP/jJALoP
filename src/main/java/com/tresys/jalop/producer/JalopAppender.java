@@ -187,6 +187,8 @@ public class JalopAppender extends AppenderSkeleton {
 						.getLineNumber())));
 			} catch (NullPointerException e1) {
 				// this is optional. Fall through
+			} catch (NumberFormatException e1) {
+				// this is optional. Fall through
 			}
 
 			ltl.getStackFrame().add(stackFrame);
