@@ -41,11 +41,18 @@ package: universal
 	rm -rf juds-$(VERSION)-universal
 
 juds-$(VERSION).jar: $(PACKAGE_DIR)/UnixDomainSocket.class $(PACKAGE_DIR)/UnixDomainSocketClient.class $(PACKAGE_DIR)/UnixDomainSocketServer.class $(PACKAGE_DIR)/MessageHeader.class nativelib $(PACKAGE_DIR)/JUDS.class
-	$(JAR) cf $@ $(PACKAGE_DIR)/*.class $(LIB64) $(LIB32)
+	if [ `uname -i` == "x86_64" ]; then \
+		$(JAR) cf $@ $(PACKAGE_DIR)/*.class $(LIB64) $(LIB32); \
+	else \
+		$(JAR) cf $@ $(PACKAGE_DIR)/*.class $(LIB32); \
+	fi
 
 nativelib: $(PACKAGE_DIR)/UnixDomainSocket.c $(PACKAGE_DIR)/UnixDomainSocket.h
 	$(CC) $(CFLAGS) -fPIC $(INCLUDEPATH) $(M32) -o $(LIB32) $< 
-	$(CC) $(CFLAGS) -fPIC $(INCLUDEPATH) $(M64) -o $(LIB64) $< 
+	if [ `uname -i` == "x86_64" ]; then \
+		$(CC) $(CFLAGS) -fPIC $(INCLUDEPATH) $(M64) -o $(LIB64) $<;  \
+	fi	
+
 
 $(PACKAGE_DIR)/UnixDomainSocket.h: $(PACKAGE).UnixDomainSocket
 	$(JAVAH) -o $@ $<
