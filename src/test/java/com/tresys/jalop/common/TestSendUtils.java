@@ -93,13 +93,12 @@ public class TestSendUtils {
 	}
 
 	@Test
-	public void testCreateAndSendHeadersSuccessEmptyBuffer() throws Exception {
+	public void testCreateAndSendHeadersSuccessEmptyBuffer(UnixDomainSocketClient socket) throws Exception {
 		MessageType messageType = null;
 		long dataLen = 0;
 		long metaLen = 0;
 		InputStream is = new ByteArrayInputStream("".getBytes());
 		byte[] meta = null;
-		String socketFile = null;
 
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
@@ -107,13 +106,13 @@ public class TestSendUtils {
 
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_AUDIT_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_JOURNAL_FD_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_JOURNAL_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 		} catch (Exception e) {
 			throw((Exception)e.getCause());
 		}
@@ -121,13 +120,12 @@ public class TestSendUtils {
 	}
 
 	@Test
-	public void testCreateAndSendHeadersSuccess() throws Exception {
+	public void testCreateAndSendHeadersSuccess(UnixDomainSocketClient socket) throws Exception {
 		MessageType messageType = null;
 		long dataLen = 5;
 		long metaLen = 2;
 		InputStream is = new ByteArrayInputStream("abcde".getBytes());
 		byte[] meta = "ab".getBytes();
-		String socketFile = null;
 
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
@@ -135,33 +133,32 @@ public class TestSendUtils {
 
 		try {
 			messageType = MessageType.JALP_LOG_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_AUDIT_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_JOURNAL_FD_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 			messageType = MessageType.JALP_JOURNAL_MSG;
-			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+			SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 		} catch (Exception e) {
 			throw((Exception)e.getCause());
 		}
 	}
 
 	@Test
-	public void testCreateAndSendHeadersWorksWithNullIS() throws Exception {
+	public void testCreateAndSendHeadersWorksWithNullIS(UnixDomainSocketClient socket) throws Exception {
 		MessageType messageType = null;
 		long dataLen = 0;
 		long metaLen = 0;
 		InputStream is = null;
 		byte[] meta = null;
-		String socketFile = null;
 
 		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
 		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
 		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		messageType = MessageType.JALP_LOG_MSG;
-		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socketFile);
+		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 	}
 
 	@Test

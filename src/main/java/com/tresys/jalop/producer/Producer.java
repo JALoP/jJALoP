@@ -25,9 +25,13 @@
 package com.tresys.jalop.producer;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+
+import com.etsy.net.JUDS;
+import com.etsy.net.UnixDomainSocketClient;
 
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 import com.tresys.jalop.common.JALException;
@@ -48,6 +52,7 @@ public class Producer {
 	private X509Certificate certificate;
 	private DMType digestMethod;
 	private String socketFile;
+	private UnixDomainSocketClient socket;
 	private MessageType messageType;
 
 	/**
@@ -219,6 +224,18 @@ public class Producer {
 
 	/**
 	 * Gets the String which is a path to the socket file
+	 *
+	 * @return the socketFile String
+	 */
+	public UnixDomainSocketClient getSocket() throws IOException {
+		if (this.socket == null) {
+			socket = new UnixDomainSocketClient(getSocketFile(), JUDS.SOCK_STREAM);
+		}
+		return this.socket;
+	}
+
+	/**
+	 * Gets the actual socket
 	 *
 	 * @return the socketFile String
 	 */

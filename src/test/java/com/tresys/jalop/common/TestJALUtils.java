@@ -110,6 +110,10 @@ public class TestJALUtils {
 		amt = new ApplicationMetadataType();
 		logger = new LoggerType();
 
+		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+
 	}
 
 	@Test
@@ -561,7 +565,7 @@ public class TestJALUtils {
 
 	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
 		@Mock
-		public void $init(String socketFile, int type) {
+		public void $init(String socket, int type) {
 			out = new UnixDomainSocketOutputStream();
 		}
 	}
@@ -591,137 +595,98 @@ public class TestJALUtils {
 	}
 
 	@Test
-	public void testSendWorksWithNullBuffer() throws Exception {
+	public void testSendWorksWithNullBuffer(UnixDomainSocketClient socket) throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
 
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		//Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		//Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		//Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		new MockUp<SendUtils>() {
 			@Mock
-			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, String socketFile) throws Exception {}
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, UnixDomainSocketClient socket) throws Exception {}
 		};
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, File.class, long.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, UnixDomainSocketClient.class, InputStream.class, File.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", null, null, 0, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, socket, null, null, 0, MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
 	}
 
 	@Test
-	public void testSendWorksWithNullDocAndNonNullBuffer() throws Exception {
+	public void testSendWorksWithNullDocAndNonNullBuffer(UnixDomainSocketClient socket) throws Exception {
 
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		//Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		//Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		//Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		new MockUp<SendUtils>() {
 			@Mock
-			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, String socketFile) throws Exception {}
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, UnixDomainSocketClient socket) throws Exception {}
 		};
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, File.class, long.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, UnixDomainSocketClient.class, InputStream.class, File.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{null, (String)"/path/to/file", new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{null, socket, new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
 	}
 
 	@Test
-	public void testSendWorksWithNonNullBuffer() throws Exception {
+	public void testSendWorksWithNonNullBuffer(UnixDomainSocketClient socket) throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 		Document doc = xml.marshal();
 
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		//Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		//Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		//Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		new MockUp<SendUtils>() {
 			@Mock
-			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, String socketFile) throws Exception {}
+			void createAndSendHeaders(MessageType messageType, long dataLen, long metaLen, InputStream is, File file, byte[] meta, UnixDomainSocketClient socket) throws Exception {}
 		};
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, File.class, long.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, UnixDomainSocketClient.class, InputStream.class, File.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"/path/to/file", new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{doc, socket, new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
 		} catch (Exception e) {
 			throw e;
 		}
 	}
 
-	@Test(expected = JALException.class)
-	public void testSendThrowsJALExceptionWhenSocketIsNull() throws Exception {
-		LoggerType logger = new LoggerType();
-		LoggerXML xml = new LoggerXML(logger);
-		xml.prepareSend("hostname", "app_name");
-		Document doc = xml.marshal();
-
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-
-		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class,InputStream.class, File.class, long.class, MessageType.class});
-			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, null, new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
-		} catch (InvocationTargetException e) {
-			throw((Exception)e.getCause());
-		}
-	}
 
 	@Test(expected = JALException.class)
-	public void testSendThrowsJALExceptionWhenSocketIsEmptyString() throws Exception {
-		LoggerType logger = new LoggerType();
-		LoggerXML xml = new LoggerXML(logger);
-		xml.prepareSend("hostname", "app_name");
-		Document doc = xml.marshal();
-
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-
-		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, File.class, long.class, MessageType.class});
-			method.setAccessible(true);
-			method.invoke(null, new Object[]{doc, (String)"",new ByteArrayInputStream("String buffer".getBytes()), null, "String buffer".length(), MessageType.JALP_LOG_MSG});
-		} catch (InvocationTargetException e) {
-			throw((Exception)e.getCause());
-		}
-	}
-
-	@Test(expected = JALException.class)
-	public void testSendThrowsJALExceptionWhenDocAndIsAreNull() throws Exception {
+	public void testSendThrowsJALExceptionWhenDocAndIsAreNull(UnixDomainSocketClient socket) throws Exception {
 		LoggerType logger = new LoggerType();
 		LoggerXML xml = new LoggerXML(logger);
 		xml.prepareSend("hostname", "app_name");
 
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
+		//Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
+		//Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
+		//Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
 
 		try {
-			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, String.class, InputStream.class, File.class, long.class, MessageType.class});
+			Method method = JALUtils.class.getDeclaredMethod("send", new Class[]{Document.class, UnixDomainSocketClient.class, InputStream.class, File.class, long.class, MessageType.class});
 			method.setAccessible(true);
-			method.invoke(null, new Object[]{null, (String)"/path/to/file", null, null, 0, MessageType.JALP_LOG_MSG});
+			method.invoke(null, new Object[]{null, socket, null, null, 0, MessageType.JALP_LOG_MSG});
 		} catch (InvocationTargetException e) {
 			throw((Exception)e.getCause());
 		}
 	}
 
 	@Test
-	public void testProcessXMLWorks() throws Exception {
+	public void testProcessXMLWorks(UnixDomainSocketClient socket) throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
@@ -742,7 +707,7 @@ public class TestJALUtils {
 	}
 
 	@Test
-	public void testProcessXMLWorksWithNullXML() throws Exception {
+	public void testProcessXMLWorksWithNullXML(UnixDomainSocketClient socket) throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
 		Producer prod = new Producer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
@@ -762,7 +727,7 @@ public class TestJALUtils {
 	}
 
 	@Test(expected = JALException.class)
-	public void testProcessXMLFailsWithNullXMLAndNotLog() throws Exception {
+	public void testProcessXMLFailsWithNullXMLAndNotLog(UnixDomainSocketClient socket) throws Exception {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 		KeyPair kp = kpg.generateKeyPair();
 		Producer prod = new Producer(null, "hostname", "app_name", kp.getPrivate(), kp.getPublic(), null, DMType.SHA256, "/path/to/socket");
@@ -906,7 +871,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
+			void send(Document doc, UnixDomainSocketClient socket, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
 		};
 
 		File file = new File("test-input/testBuffer");
@@ -924,7 +889,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
+			void send(Document doc, UnixDomainSocketClient socket, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
 		};
 
 		File file = new File("test-input/testBuffer");
@@ -942,7 +907,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
+			void send(Document doc, UnixDomainSocketClient socket, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
 		};
 
 		JALUtils.processSend(prod, "String buffer");
@@ -959,7 +924,7 @@ public class TestJALUtils {
 
 		new MockUp<JALUtils>() {
 			@Mock
-			void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
+			void send(Document doc, UnixDomainSocketClient socket, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {}
 		};
 
 		JALUtils.processSend(prod, (String)null);

@@ -59,37 +59,35 @@ public class SendUtils {
 											InputStream is,
 											File file,
 											byte[] meta,
-											String socketFile) throws Exception {
+											UnixDomainSocketClient socket) throws Exception {
 
-		UnixDomainSocketClient socket = new UnixDomainSocketClient(socketFile,
-				JUDS.SOCK_STREAM);
+		synchronized (socket) {
+			UnixDomainSocketOutputStream out = (UnixDomainSocketOutputStream)socket.getOutputStream();
 
-		UnixDomainSocketOutputStream out = (UnixDomainSocketOutputStream)socket.getOutputStream();
+			ConnectionHeader connectionHeader = new ConnectionHeader((short)1, messageType, dataLen, metaLen);
 
-		ConnectionHeader connectionHeader = new ConnectionHeader((short)1, messageType, dataLen, metaLen);
+			// Create MessageHeader with ConnectionHeader info - send
+			out.sendmsg(createHeader(connectionHeader, file));
 
-		// Create MessageHeader with ConnectionHeader info - send
-		out.sendmsg(createHeader(connectionHeader, file));
+			// If messageType != 4 (fd) create MessageHeader with data info - send
+			if(MessageType.JALP_JOURNAL_FD_MSG != messageType) {
 
-		// If messageType != 4 (fd) create MessageHeader with data info - send
-		if(MessageType.JALP_JOURNAL_FD_MSG != messageType) {
+				if(is != null) {
+					byte[] bufferBytes = new byte[BUFFER_SIZE];
+					int read;
 
-			if(is != null) {
-				byte[] bufferBytes = new byte[BUFFER_SIZE];
-				int read;
-
-				while((read = is.read(bufferBytes, 0, bufferBytes.length)) > 0) {
-					MessageHeader dataHeader = createDataHeader(bufferBytes, read);
-					out.sendmsg(dataHeader);
+					while((read = is.read(bufferBytes, 0, bufferBytes.length)) > 0) {
+						MessageHeader dataHeader = createDataHeader(bufferBytes, read);
+						out.sendmsg(dataHeader);
+					}
 				}
+				out.sendmsg(createBreakHeader());
 			}
-			out.sendmsg(createBreakHeader());
+
+			// Create MessageHeader with meta info - send
+			out.sendmsg(createMetaHeader(meta));
 		}
 
-		// Create MessageHeader with meta info - send
-		out.sendmsg(createMetaHeader(meta));
-
-		socket.close();
 	}
 
 	/**

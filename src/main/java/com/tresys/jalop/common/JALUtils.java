@@ -67,6 +67,8 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import com.etsy.net.UnixDomainSocketClient;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -100,10 +102,10 @@ public class JALUtils {
 		Document doc = processXML(producer, digestStream);
 
 		if(producer.getMessageType().equals(MessageType.JALP_JOURNAL_FD_MSG)) {
-			send(doc, producer.getSocketFile(), null, file, file.length(), producer.getMessageType());
+			send(doc, producer.getSocket(), null, file, file.length(), producer.getMessageType());
 		} else {
 			InputStream sendStream = new FileInputStream(file);
-			send(doc, producer.getSocketFile(), sendStream, null, file.length(), producer.getMessageType());
+			send(doc, producer.getSocket(), sendStream, null, file.length(), producer.getMessageType());
 		}
 	}
 
@@ -128,7 +130,7 @@ public class JALUtils {
 			sendStream = new ByteArrayInputStream(buffer.getBytes());
 			bufferLength = buffer.length();
 		}
-		send(doc, producer.getSocketFile(), sendStream, null, bufferLength, producer.getMessageType());
+		send(doc, producer.getSocket(), sendStream, null, bufferLength, producer.getMessageType());
 	}
 
 	/**
@@ -375,33 +377,29 @@ public class JALUtils {
 	 * @param messageType	the type of message to send
 	 * @throws Exception
 	 */
-	private static void send(Document doc, String socketFile, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {
+	private static void send(Document doc, UnixDomainSocketClient socket, InputStream is, File file, long bufferLength, MessageType messageType) throws Exception {
 		if(doc == null && is == null && file == null) {
 			throw new JALException("Error in JALUtils.send - doc and buffer cannot both be null");
 		}
-		if(socketFile != null && !"".equals(socketFile)) {
 
-			long appMetaLength = 0;
-			byte[] appMetaBytes = null;
+		long appMetaLength = 0;
+		byte[] appMetaBytes = null;
 
-			if(doc != null) {
-				TransformerFactory transFactory = TransformerFactory.newInstance();
-				Transformer trans = transFactory.newTransformer();
-				StringWriter writer = new StringWriter();
-				trans.transform(new DOMSource(doc), new StreamResult(writer));
-				String appMeta = writer.toString();
+		if(doc != null) {
+			TransformerFactory transFactory = TransformerFactory.newInstance();
+			Transformer trans = transFactory.newTransformer();
+			StringWriter writer = new StringWriter();
+			trans.transform(new DOMSource(doc), new StreamResult(writer));
+			String appMeta = writer.toString();
 
-				if(appMeta != null) {
-					appMetaBytes = appMeta.getBytes();
-					appMetaLength = appMetaBytes.length;
-				}
+			if(appMeta != null) {
+				appMetaBytes = appMeta.getBytes();
+				appMetaLength = appMetaBytes.length;
 			}
-
-			SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, file, appMetaBytes, socketFile);
-
-		} else {
-			throw new JALException("Error in JALUtils.send - socketFile path must be set in producer");
 		}
+
+		SendUtils.createAndSendHeaders(messageType, bufferLength, appMetaLength, is, file, appMetaBytes, socket);
+
 	}
 
 	/**
