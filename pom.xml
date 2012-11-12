@@ -63,7 +63,7 @@
 			<groupId>com.googlecode.jmockit</groupId>
 			<artifactId>jmockit-coverage</artifactId>
 			<version>0.999.13</version>
-			<scope>runtime</scope> 
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
