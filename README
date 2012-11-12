@@ -36,21 +36,21 @@ Installation Instructions:
 
 Installation Instructions for JALPTest:
 
-1. Create jjalop-1.0-jar-with-dependencies.jar with the above installation
+1. Create jjalop-0.1.5-jar-with-dependencies.jar with the above installation
 instructions.
 
 2. Install jjalop dependency with maven
 	- From the jjalop/utils/JalpTest directory, run:
 		mvn install:install-file -DgroupId=com.tresys.jalop \
-		-DartifactId=jjalop -Dversion=1.0 -Dpackaging=jar \
-		-Dfile=../../target/jjalop-1.0-jar-with-dependencies.jar
+		-DartifactId=jjalop -Dversion=0.1.5 -Dpackaging=jar \
+		-Dfile=../../target/jjalop-0.1.5-jar-with-dependencies.jar
 
 3. Package JALPTest project
 	- Run 'mvn package'
 
 4. To run the JALPTest jar
 	- From the jjalop/utils/JalpTest directory, run:
-		java -cp target/jalptest-1.0-jar-with-dependencies.jar \
+		java -cp target/jalptest-0.1.5-jar-with-dependencies.jar \
 		JALPTest <options>
 
 Usage for JALPTest:
