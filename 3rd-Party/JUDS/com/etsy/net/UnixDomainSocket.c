@@ -132,6 +132,9 @@ Java_com_etsy_net_UnixDomainSocket_nativeOpen(JNIEnv * jEnv,
 {
     int s;            /* socket file handle */
     struct sockaddr_un sa;
+    if (NULL == jSocketFile) {
+        return -1;
+    }
     const char *socketFile =
         (*jEnv)->GetStringUTFChars(jEnv, jSocketFile, NULL);
     socklen_t salen = sockaddr_init(socketFile, &sa);

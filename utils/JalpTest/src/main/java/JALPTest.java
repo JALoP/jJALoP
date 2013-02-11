@@ -29,8 +29,10 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream.GetField;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -66,6 +68,7 @@ public class JALPTest {
 	 * @param args	the command line arguments
 	 */
 	public static void main(String[] args) {
+		Producer producer = null;
 		try {
 			Options options = createOptions();
 			CommandLineParser parser = new PosixParser();
@@ -74,10 +77,10 @@ public class JALPTest {
 			String pathToXML = null;
 			String type = null;
 			String input = null;
-			String socketPath = null;
 			String privateKeyPath = null;
 			String publicKeyPath = null;
 			String certPath = null;
+			String socketPath = null;
 			Boolean hasDigest = false;
 			File file = null;
 			ApplicationMetadataXML xml = null;
@@ -125,9 +128,15 @@ public class JALPTest {
 				xml = createXML(readXML(pathToXML));
 			}
 
-			Producer producer = createProducer(xml, socketPath, privateKeyPath, publicKeyPath, certPath, hasDigest);
+			producer = createProducer(xml, socketPath, privateKeyPath, publicKeyPath, certPath, hasDigest);
 			callSend(producer, type, input, file);
 
+		} catch (IOException e) {
+			if (producer != null) {
+				System.out.println("Failed to open socket: " + producer.getSocketFile());
+			} else {
+				System.out.println("Failed to create Producer");
+			}
 		} catch (Exception e) {
 			error(e.toString());
 			return;

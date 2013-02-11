@@ -44,6 +44,7 @@ import com.tresys.jalop.common.JALUtils.DMType;
  */
 public class Producer {
 
+	private static final String DEFAULT_SOCKET_FILE = "/var/run/jalop/jalop.sock";
 	private ApplicationMetadataXML xml;
 	private String hostName;
 	private String applicationName;
@@ -59,16 +60,16 @@ public class Producer {
 	 * Constructor
 	 */
 	public Producer() {
-
+		this(null, null, null, null, null, null, null, null);
 	}
 
 	/**
-	 * Constructor that takes an ApplicationMetadataXML
-	 *
-	 * @param xml	the ApplicationMetadataXML
-	 */
+	* Constructor that takes an ApplicationMetadataXML
+	*
+	* @param xml   the ApplicationMetadataXML
+	*/
 	public Producer(ApplicationMetadataXML xml) {
-		this.xml = xml;
+		this(xml, null, null, null, null, null, null, null);
 	}
 
 	/**
@@ -93,7 +94,11 @@ public class Producer {
 		this.publicKey = publicKey;
 		this.certificate = certificate;
 		this.digestMethod = digestMethod;
-		this.socketFile = socketFile;
+		if (socketFile == null) {
+			this.socketFile = DEFAULT_SOCKET_FILE;
+		} else {
+			this.socketFile = socketFile;
+		}
 	}
 
 	/**
@@ -249,7 +254,11 @@ public class Producer {
 	 * @param socketFile the String path to the socket file to set
 	 */
 	public void setSocketFile(String socketFile) {
-		this.socketFile = socketFile;
+		if (socketFile != null) {
+			this.socketFile = socketFile;
+			// Reset the socket file, this will be re-created later.
+			this.socket = null;
+		}
 	}
 
 	/**
