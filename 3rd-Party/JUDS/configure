@@ -2666,7 +2666,7 @@ fi;
 fi
 JAVAC=$JAVA_HOME/bin/javac
 
-if test "`$JAVAC -version 2>&1 | grep '1.6'`" = ""; then
+if test "`$JAVAC -version 2>&1 | grep '1.7'`" = ""; then
     { { echo "$as_me:$LINENO: error: The java compiler $JAVAC does not seem to be version 1.6 (try setting JAVA_HOME)?" >&5
 echo "$as_me: error: The java compiler $JAVAC does not seem to be version 1.6 (try setting JAVA_HOME)?" >&2;}
    { (exit 1); exit 1; }; }

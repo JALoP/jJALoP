@@ -9,8 +9,8 @@ The following libraries are included in the 3rd-party directory:
 
 
 Building and Installing
-This project uses the maven (maven.apache.org) build tool version 3.0.4 and will
-compile under Java 1.6 update 27.
+This project uses the maven (maven.apache.org) build tool version 3.2.1 and will
+compile under Java 1.7 update 51.
 
 Installation Instructions:
 
