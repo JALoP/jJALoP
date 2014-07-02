@@ -4,7 +4,7 @@
 
 	<groupId>com.tresys.jalop</groupId>
 	<artifactId>jalptest</artifactId>
-	<version>0.1.6-SNAPSHOT</version>
+	<version>0.1.6</version>
 	<packaging>jar</packaging>
 
 	<name>jalptest</name>
@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>com.tresys.jalop</groupId>
 			<artifactId>jjalop</artifactId>
-			<version>0.1.6-SNAPSHOT</version>
+			<version>0.1.6</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
