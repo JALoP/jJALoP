@@ -8,14 +8,16 @@ AC_CONFIG_HEADER([config.h])
 
 # PROGRAMS
 AC_PROG_CC
-if test x$JAVA_HOME = x; then 
+if test x$JAVA_HOME = x; then
    AX_CHECK_JAVA_HOME
 fi
 JAVAC=$JAVA_HOME/bin/javac
 
 if test "`$JAVAC -version 2>&1 | grep '1.6'`" = ""; then
   if test "`$JAVAC -version 2>&1 | grep '1.7'`" = ""; then
-    AC_MSG_ERROR([The java compiler $JAVAC does not seem to be version 1.6 or 1.7 (try setting JAVA_HOME)?])
+    if test "`$JAVAC -version 2>&1 | grep '1.8'`" = ""; then
+       AC_MSG_ERROR([The java compiler $JAVAC does not seem to be version 1.6, 1.7, or 1.8 (try setting JAVA_HOME)?])
+    fi
   fi
 fi
 AC_SUBST(JAVA_HOME)
