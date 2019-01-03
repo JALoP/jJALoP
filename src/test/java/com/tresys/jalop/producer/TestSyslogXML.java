@@ -32,8 +32,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import mockit.Mock;
-import mockit.MockUp;
+import mockit.*;
 
 import org.junit.Before;
 import org.junit.Test;

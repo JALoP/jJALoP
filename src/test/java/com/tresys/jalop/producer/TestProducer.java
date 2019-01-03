@@ -37,8 +37,7 @@ import java.security.KeyPairGenerator;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import mockit.Mock;
-import mockit.MockUp;
+import mockit.*;
 
 import org.junit.Test;
 

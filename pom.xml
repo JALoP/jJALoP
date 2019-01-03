@@ -54,15 +54,15 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.googlecode.jmockit</groupId>
+			<groupId>org.jmockit</groupId>
 			<artifactId>jmockit</artifactId>
-			<version>0.999.13</version>
+			<version>1.22</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.googlecode.jmockit</groupId>
+			<groupId>org.jmockit</groupId>
 			<artifactId>jmockit-coverage</artifactId>
-			<version>0.999.13</version>
+			<version>1.9</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

@@ -36,17 +36,12 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import mockit.Mock;
-import mockit.Mocked;
-import mockit.Mockit;
+import mockit.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.etsy.net.MessageHeader;
-import com.etsy.net.UnixDomainSocket;
-import com.etsy.net.UnixDomainSocket.UnixDomainSocketOutputStream;
-import com.etsy.net.UnixDomainSocketClient;
 import com.tresys.jalop.common.ConnectionHeader.MessageType;
 
 /**
@@ -61,6 +56,7 @@ public class TestSendUtils {
 		utils = new SendUtils();
 	}
 
+	/*
 	public static class MockUnixDomainSocketClient extends UnixDomainSocket {
 		@Mock
 		public void $init(String socketFile, int type) {
@@ -160,6 +156,7 @@ public class TestSendUtils {
 		messageType = MessageType.JALP_LOG_MSG;
 		SendUtils.createAndSendHeaders(messageType, dataLen, metaLen, is, null, meta, socket);
 	}
+	*/
 
 	@Test
 	public void testCreateHeaderSuccess() throws Exception {

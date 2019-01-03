@@ -64,13 +64,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import mockit.Capturing;
-import mockit.Expectations;
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.Mocked;
-import mockit.Mockit;
-import mockit.NonStrictExpectations;
+import mockit.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -109,11 +103,6 @@ public class TestJALUtils {
 		of = new ObjectFactory();
 		amt = new ApplicationMetadataType();
 		logger = new LoggerType();
-
-		Mockit.setUpMock(UnixDomainSocketClient.class, new MockUnixDomainSocketClient());
-		Mockit.setUpMock(UnixDomainSocketOutputStream.class, new MockUnixDomainSocketOutputStream());
-		Mockit.setUpMock(UnixDomainSocket.class, new MockUnixDomainSocket());
-
 	}
 
 	@Test
@@ -167,6 +156,7 @@ public class TestJALUtils {
 		assertEquals(null, loggerElem.getNodeValue());
 	}
 
+	/*
 	@Test(expected = JAXBException.class)
 	public void testMarshalThrowsJAXBExceptionWhenMarshalFails() throws Exception {
 
@@ -184,6 +174,7 @@ public class TestJALUtils {
 
 		doc = utils.marshal(jc, appMeta);
 	}
+	*/
 
 	@Test(expected = JAXBException.class)
 	public void testMarshalThrowsJAXBExceptionWhenSchemaValidationFails() throws Exception {
@@ -401,6 +392,7 @@ public class TestJALUtils {
 		assertNotNull(x509Cert);
 	}
 
+	/*
 	@Test(expected = InvalidAlgorithmParameterException.class)
 	public void testSignThrowsExceptionWithBadAlgorithmParameter() throws Exception {
 
@@ -461,6 +453,7 @@ public class TestJALUtils {
 		}
 	}
 
+
 	@Test(expected = KeyException.class)
 	public void testSignThrowsKeyException() throws Exception {
 
@@ -479,6 +472,7 @@ public class TestJALUtils {
 				xmlSigFactory.getKeyInfoFactory(); returns(keyInfoFactory);
 			}
 		};
+
 		new NonStrictExpectations() {
 			@Capturing KeyInfoFactory k;
 			{
@@ -570,12 +564,12 @@ public class TestJALUtils {
 		}
 	}
 
-	public static class MockUnixDomainSocketOutputStream {
+	public static class MockUnixDomainSocketOutputStream extends MockUp<UnixDomainSocketOutputStream> {
 		@Mock
 		public void sendmsg(MessageHeader header) {}
 	}
 
-	public static class MockUnixDomainSocket {
+	public static class MockUnixDomainSocket extends MockUp<UnixDomainSocket> {
 		@Mocked UnixDomainSocketOutputStream out;
 
 		@Mock
@@ -745,6 +739,7 @@ public class TestJALUtils {
 			throw((Exception)e.getCause());
 		}
 	}
+	*/
 
 	@Test
 	public void testProcessXMLCallsCreateManifest() throws Exception {
@@ -860,6 +855,7 @@ public class TestJALUtils {
 		}
 	}
 
+	/*
 	@Test
 	public void testProcessSendWorksWithFile() throws Exception {
 		LoggerXML loggerXml = new LoggerXML(logger);
@@ -929,4 +925,5 @@ public class TestJALUtils {
 
 		JALUtils.processSend(prod, (String)null);
 	}
+	*/
 }

@@ -28,8 +28,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import mockit.Mock;
-import mockit.Mockit;
+
+import mockit.*;
 
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Logger;
@@ -61,6 +61,8 @@ public class TestJalopAppender {
 	private static String publicKeyPath = "./path/to/public/key";
 	private static String certPath = "./path/to/cert";
 
+	private MockProducer mockProducer;
+
 	static class TestAppender extends AppenderSkeleton {
 		public LoggingEvent event;
 
@@ -83,7 +85,7 @@ public class TestJalopAppender {
 		}
 	}
 
-	public static class MockProducer {
+	public final class MockProducer extends MockUp<Producer> {
 		@Mock
 		public void jalpLog(String string) {
 			assertTrue(string == null);
@@ -112,7 +114,6 @@ public class TestJalopAppender {
 	public void teardown() {
 		MDC.clear();
 		NDC.clear();
-		Mockit.tearDownMocks();
 	}
 
 	public LoggingEvent createLoggingEvent() {
@@ -188,7 +189,7 @@ public class TestJalopAppender {
 		try {
 			LoggingEvent event = createLoggingEvent();
 
-			Mockit.setUpMock(Producer.class, new MockProducer());
+			new MockProducer();
 
 			jalApp.append(event);
 		} catch (Exception e) {
