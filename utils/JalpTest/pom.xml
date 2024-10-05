@@ -4,7 +4,7 @@
 
 	<groupId>com.tresys.jalop</groupId>
 	<artifactId>jalptest</artifactId>
-	<version>0.1.6-SNAPSHOT</version>
+	<version>1.0.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>jalptest</name>
@@ -19,7 +19,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.2</version>
+				<version>2.3.2</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -32,7 +32,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.1</version>
+				<version>3.1.0</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>com.tresys.jalop</groupId>
 			<artifactId>jjalop</artifactId>
-			<version>0.1.6-SNAPSHOT</version>
+			<version>1.0.0.2</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>

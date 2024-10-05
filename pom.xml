@@ -4,7 +4,7 @@
 
 	<groupId>com.tresys.jalop</groupId>
 	<artifactId>jjalop</artifactId>
-	<version>0.1.6-SNAPSHOT</version>
+	<version>1.0.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>jjalop</name>
@@ -27,7 +27,7 @@
 			</plugin>
 			<plugin>
 		        <artifactId>maven-assembly-plugin</artifactId>
-		        <version>2.2.1</version>
+		        <version>3.1.0</version>
 		        <configuration>
 		          <descriptorRefs>
 		            <descriptorRef>jar-with-dependencies</descriptorRef>
