@@ -1,16 +1,12 @@
-This is a reference for the Java implementation of the Journal, Audit, and
-Logging Protocol (JALoP).
-The Java implementation is divided into a number of components:
-  The JALoP Producer Library (JPL)
-
+This project provides a Java Producer (JALPTest)
 
 The following libraries are included in the 3rd-party directory:
   JUDS
 
 
 Building and Installing
-This project uses the maven (maven.apache.org) build tool version 3.0.4 and will
-compile under Java 1.6 update 27.
+This project uses the maven (maven.apache.org) build tool version 3.0.4 or higher and will
+compile under Java 1.8.
 
 Installation Instructions:
 
@@ -19,9 +15,12 @@ Installation Instructions:
 
 2. Install JUDS
 	- Make sure libgcc.i686 and glibc-devel.i686 are installed
+	- From the 3rd-Party/JUDS directory, run 'sh autoconf.sh' to create the
+	configure file
+	- Update the JAVA_HOME variable in the makefile if necessary (JAVA_HOME must be set before running configure)
+	    -Ex: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
 	- From the 3rd-Party/JUDS directory, run './configure' to create the
 	makefile
-	- Update the JAVA_HOME variable in the makefile if necessary
 	- Run 'make'
 	- Run 'make install'
 
@@ -36,21 +35,21 @@ Installation Instructions:
 
 Installation Instructions for JALPTest:
 
-1. Create jjalop-0.1.6-jar-with-dependencies.jar with the above installation
+1. Create jjalop-1.0.0.2-jar-with-dependencies.jar with the above installation
 instructions.
 
 2. Install jjalop dependency with maven
 	- From the jjalop/utils/JalpTest directory, run:
 		mvn install:install-file -DgroupId=com.tresys.jalop \
-		-DartifactId=jjalop -Dversion=0.1.6 -Dpackaging=jar \
-		-Dfile=../../target/jjalop-0.1.6-jar-with-dependencies.jar
+		-DartifactId=jjalop -Dversion=1.0.0.2 -Dpackaging=jar \
+		-Dfile=../../target/jjalop-1.0.0.2-jar-with-dependencies.jar
 
 3. Package JALPTest project
 	- Run 'mvn package'
 
 4. To run the JALPTest jar
 	- From the jjalop/utils/JalpTest directory, run:
-		java -cp target/jalptest-0.1.6-jar-with-dependencies.jar \
+		java -cp target/jalptest-1.0.0.2-jar-with-dependencies.jar \
 		JALPTest <options>
 
 Usage for JALPTest:
@@ -105,8 +104,6 @@ Configuration parameters for this appender are:
 
 
 This project is built and tested in the following environments:
-  RedHat Enterprise Linux (RHEL) 5 on x86_64, using gcc version 4.1.2
-  RHEL 6 on x86_64, using gcc version 4.4.5
-  RHEL 6 on i386, using gcc version 4.4.5
-  Solaris 10 TX 09/10 on i386, using gcc version 3.4.3
-
+  RedHat Enterprise Linux (RHEL) 7 on x86_64, using gcc version 7.3.1 20180303
+  RHEL 8 on x86_64, using gcc version 8.5.0 20210514
+  RHEL 9 on x86_64, using gcc version 11.4.1 20231218
